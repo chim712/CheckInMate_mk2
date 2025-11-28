@@ -22,5 +22,5 @@ templates = Jinja2Templates(directory="ui/templates")
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     context = {"request": request, "title": "CheckInMate"}
-    return templates.TemplateResponse("index.html", context)
+    return templates.TemplateResponse("kiosk_main.html", context)
 

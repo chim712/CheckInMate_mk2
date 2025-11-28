@@ -1,0 +1,358 @@
+:root {
+  /* ===== 폰트 사이즈 스케일 (영역별 오프셋) ===== */
+  --scale-keypad: 1;
+  --scale-date: 2;
+  --scale-id: 2.5;
+
+  /* 기본 폰트 사이즈 */
+  --fs-date-base: clamp(12px, 0.9vw, 18px);
+  --fs-time-base: clamp(20px, 1.8vw, 34px);
+  --fs-id-value-base: clamp(14px, 1.6vw, 28px);
+  --fs-id-placeholder-base: clamp(14px, 1.2vw, 20px);
+  --fs-keypad-base: clamp(18px, 1.8vw, 28px);
+  --fs-keypad-label-base: clamp(10px, 0.9vw, 14px);
+  --fs-submit-base: clamp(14px, 1.0vw, 18px);
+  --fs-logo-sub-base: clamp(10px, 0.8vw, 14px);
+
+  /* 스케일 적용 */
+  --fs-date: calc(var(--fs-date-base) * var(--scale-date));
+  --fs-time: calc(var(--fs-time-base) * var(--scale-date));
+  --fs-id-value: calc(var(--fs-id-value-base) * var(--scale-id));
+  --fs-id-placeholder: calc(var(--fs-id-placeholder-base) * var(--scale-id));
+  --fs-keypad: calc(var(--fs-keypad-base) * var(--scale-keypad));
+  --fs-keypad-label: var(--fs-keypad-label-base);
+  --fs-submit: var(--fs-submit-base);
+  --fs-logo-sub: var(--fs-logo-sub-base);
+
+  /* ===== 키패드 사이즈 ===== */
+  --key-size: clamp(84px, 9vw, 180px);
+  --key-gap: clamp(12px, 1.4vw, 32px);
+  --keypad-pad-x: clamp(24px, 2.4vw, 48px);
+
+  /* ===== 색상 ===== */
+  --bg: #e5e7eb;
+  --frame-bg: #f9fafb;
+  --card-bg: #ffffff;
+  --border: #d1d5db;
+  --border-strong: #9ca3af;
+  --muted: #6b7280;
+  --text: #111827;
+  --accent: #2563eb;
+  --accent-soft: #3b82f6;
+  --danger: #b91c1c;
+
+  --shadow-frame: 0 18px 45px rgba(15, 23, 42, 0.15);
+  --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.06);
+
+  --radius-lg: 24px;
+  --radius-md: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at top, #f3f4f6, var(--bg) 60%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Noto Sans KR", sans-serif;
+  color: var(--text);
+}
+
+/* 16:9 고정 프레임 */
+.kiosk-shell {
+  width: min(100vw, calc(100vh * (16 / 9)));
+  aspect-ratio: 16 / 9;
+  padding: 24px;
+}
+
+.kiosk-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #f9fafb, #eef2ff);
+  box-shadow: var(--shadow-frame);
+  padding: 24px;
+  display: flex;
+  gap: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.5vw;
+  padding-right: 1vw;
+}
+
+.right-panel {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 로고 영역 */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.logo-wrap {
+  width: 12vmin;
+  height: 12vmin;
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.logo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logo-placeholder {
+  font-size: 0.8vw;
+  color: var(--muted);
+}
+
+.logo-texts {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.logo-main {
+  font-size: 2.6vw;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.logo-sub {
+  font-size: calc(var(--fs-logo-sub) * 2.2);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* 시계 */
+.clock-area {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.clock-date {
+  font-size: var(--fs-date);
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.clock-time {
+  font-size: var(--fs-time);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--text);
+}
+
+/* 아이디 입력부 */
+.id-display-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.id-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.id-label {
+  font-size: 0.9vw;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.id-input-row {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.id-value {
+  flex: 1;
+  min-height: 3.4vmin;
+  font-size: var(--fs-id-value);
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.id-value.placeholder {
+  font-size: var(--fs-id-placeholder);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* 등록 버튼 */
+.submit-area {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-btn {
+  min-width: 140px;
+  padding: 10px 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  font-size: var(--fs-submit);
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+  color: #f9fafb;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    filter 0.12s ease-out;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 16px 38px rgba(37, 99, 235, 0.45);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 15px rgba(15, 23, 42, 0.25);
+}
+
+/* 키패드 */
+.keypad-card {
+  flex: 1;
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  padding: 16px var(--keypad-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  width: calc(
+    var(--key-size) * 3 +
+    var(--key-gap) * 2 +
+    var(--keypad-pad-x) * 2
+  );
+  max-width: 100%;
+}
+
+.keypad-title {
+  font-size: var(--fs-keypad-label);
+  font-weight: 500;
+  color: var(--muted);
+  text-align: right;
+}
+
+.keypad-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, var(--key-size));
+  grid-auto-rows: var(--key-size);
+  justify-content: center;
+  gap: var(--key-gap);
+}
+
+.key-btn {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-keypad);
+  font-weight: 600;
+  cursor: pointer;
+  width: var(--key-size);
+  height: var(--key-size);
+
+  box-shadow:
+    0 5px 12px rgba(148, 163, 184, 0.35),
+    0 0 0 1px rgba(148, 163, 184, 0.15);
+  transition:
+    transform 0.06s ease-out,
+    box-shadow 0.06s ease-out,
+    background 0.06s ease-out,
+    filter 0.06s ease-out;
+}
+
+.key-btn:hover {
+  filter: brightness(1.03);
+  background: #ffffff;
+}
+
+.key-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 8px rgba(148, 163, 184, 0.5),
+    0 0 0 1px rgba(148, 163, 184, 0.3);
+}
+
+.key-btn.key-clear {
+  font-size: calc(var(--fs-keypad) * 0.6);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.6);
+  box-shadow:
+    0 5px 12px rgba(254, 202, 202, 0.8),
+    0 0 0 1px rgba(185, 28, 28, 0.4);
+}
+
+.key-btn.key-blank {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 작은 화면 보정 */
+@media (max-width: 768px) {
+  .kiosk-shell {
+    padding: 8px;
+  }
+  .kiosk-frame {
+    padding: 16px;
+    gap: 16px;
+  }
+  .logo-wrap {
+    max-width: 56px;
+    max-height: 56px;
+  }
+}
