@@ -21,8 +21,8 @@
             <span class="logo-placeholder" style="display:none;">LOGO</span>
           </div>
           <div class="logo-texts">
-            <div class="logo-main">ATTENDANCE KIOSK</div>
-            <div class="logo-sub">출석 인증 · 학생용 ID 입력</div>
+            <div class="logo-main">Check-In Mate</div>
+            <div class="logo-sub">MCN Lab. 출석 관리 시스템</div>
           </div>
         </div>
 
@@ -38,7 +38,7 @@
             <div class="id-label">STUDENT ID</div>
             <div class="id-input-row">
               <span id="idValue" class="id-value placeholder">
-                아이디를 입력하세요
+                Insert ID
               </span>
             </div>
           </div>
@@ -53,7 +53,6 @@
       <!-- 우측 키패드 -->
       <div class="right-panel">
         <div class="keypad-card">
-          <div class="keypad-title">(C) 2025 Chang-Hwan Im</div>
           <div class="keypad-grid">
             <button class="key-btn" data-key="1">1</button>
             <button class="key-btn" data-key="2">2</button>
@@ -77,5 +76,26 @@
 
   <!-- JS 연결 -->
   <script src="/static/js/kiosk_main.js"></script>
+
+  <!-- 출석 등록 결과 모달 -->
+  <div id="attendModal" class="modal-overlay">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-title">출석 완료!</div>
+      <div id="attendModalMessage" class="modal-message">
+        메시지 내용이 들어갑니다.
+      </div>
+      <div class="modal-actions">
+        <button id="modalCloseBtn" class="modal-btn secondary">
+          닫기
+        </button>
+        <button id="modalLogBtn" class="modal-btn primary">
+          출석 기록 보기
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
 </body>
 </html>

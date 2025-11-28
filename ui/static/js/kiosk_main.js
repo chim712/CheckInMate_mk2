@@ -45,7 +45,7 @@ function initKeypad() {
 
   function renderValue() {
     if (!currentValue) {
-      idValueEl.textContent = "아이디를 입력하세요";
+      idValueEl.textContent = "ID";
       idValueEl.classList.add("placeholder");
     } else {
       idValueEl.textContent = currentValue;
@@ -70,21 +70,85 @@ function initKeypad() {
   }
 
   if (submitBtn) {
-    submitBtn.addEventListener("click", () => {
+    submitBtn.addEventListener("click", async() => {
       const trimmed = currentValue.trim();
       if (!trimmed) {
         alert("아이디를 먼저 입력해 주세요.");
         return;
       }
-      console.log("등록 요청 ID:", trimmed);
-      alert(`ID ${trimmed} 출석 등록 요청을 전송했습니다.`);
+
+      // 아이디 존재 시 POST 요청
+      try {
+      const resp = await fetch("/attendance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          kioskId: trimmed,
+          // 필요하면 추가 필드
+          // timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!resp.ok) {
+        throw new Error("서버 오류: " + resp.status);
+      }
+
+      const data = await resp.json();
+      // 예: { status: "ok", message: "..." } 형식이라고 가정
+      
+      // 성공 후 입력 초기화
       currentValue = "";
       renderValue();
+      
+      showAttendanceModal(data.message, trimmed);
+
+    } catch (e) {
+      console.error(e);
+      alert("등록되지 않은 ID입니다");
+    }
     });
   }
 
   renderValue();
 }
+
+function showAttendanceModal(message, id) {
+  const overlay = document.getElementById("attendModal");
+  const msgEl = document.getElementById("attendModalMessage");
+  const closeBtn = document.getElementById("modalCloseBtn");
+  const logBtn = document.getElementById("modalLogBtn");
+
+  if (!overlay || !msgEl) return;
+
+  msgEl.textContent = message;
+  overlay.classList.add("active");
+
+  // 닫기 버튼
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      overlay.classList.remove("active");
+    };
+  }
+
+  // 출석 기록 보기 버튼
+  if (logBtn) {
+    logBtn.onclick = () => {
+      // 로그 페이지 URL에 맞게 변경
+      window.location.href = "/logview?id="+id;
+    };
+  }
+
+  // 배경 클릭 시 닫기 (선택)
+  const backdrop = overlay.querySelector(".modal-backdrop");
+  if (backdrop) {
+    backdrop.onclick = () => {
+      overlay.classList.remove("active");
+    };
+  }
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
   startClock();

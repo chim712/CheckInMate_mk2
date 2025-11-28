@@ -1,0 +1,211 @@
+:root {
+  --frame-bg: #ffffff;
+  --text-main: #111111;
+  --text-muted: #555555;
+  --border: #cfcfcf;
+  --card-bg-top: #fafafa;
+  --card-bg-bottom: #f4f4f4;
+  --shadow: 0 8px 22px rgba(0, 0, 0, 0.10);
+  --radius-frame: 18px;
+  --radius-card: 26px;
+
+  --bg: #e5e7eb;
+  --shadow-frame: 0 18px 45px rgba(15, 23, 42, 0.15);
+  --radius-lg: 24px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #f3f4f6, var(--bg) 60%);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* PC에서는 가로를 넓게, 세로는 창 높이에 맞게 */
+.frame-wrapper {
+  width: min(1280px, 100vw - 32px);
+  height: min(720px, 100vh - 32px);  /* 창 높이에 맞추고, 그 안에서만 스크롤 */
+  background: linear-gradient(135deg, #f9fafb, #eef2ff);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-frame);
+  padding: 32px 40px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상단 헤더: 여기는 항상 고정 */
+.header-text {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  white-space: nowrap;    /* 줄바꿈 금지 */
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 18px;
+  border-bottom: 2px solid #d8d8d8;
+  flex-shrink: 0;
+}
+/* flex-direction 변경 제거 */
+
+
+.user-name {
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: 0.01em;  /* 홍 길 동 형태 간격 */
+  white-space: nowrap;
+}
+
+.subtitle {
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+/* 로그 리스트: 이 부분만 스크롤 */
+.log-scroll {
+  margin-top: 24px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.log-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.log-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.log-scroll::-webkit-scrollbar-thumb {
+  background: #c2c6d0;
+  border-radius: 999px;
+}
+
+/* 날짜 카드 */
+.log-card {
+  display: flex;
+  align-items: stretch;
+  gap: 36px;
+  padding: 15px 40px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  background: linear-gradient(to bottom, var(--card-bg-top), var(--card-bg-bottom));
+  margin-bottom: 18px;
+}
+
+.date-box {
+  min-width: 110px;
+  text-align: center;
+  border-right: 1px solid #dadada;
+  padding-right: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.date-month {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: -8px;
+}
+
+.date-day {
+  font-size: 54px;
+  font-weight: 700;
+  margin-bottom: -8px;
+}
+
+.date-weekday {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* 토/일 색상 강조 */
+.log-card.weekend-sat .date-day,
+.log-card.weekend-sat .date-weekday {
+  color: #1d3f8f;  /* 짙은 파랑 */
+  font-weight: 700;
+}
+
+.log-card.weekend-sun .date-day,
+.log-card.weekend-sun .date-weekday {
+  color: #b22222;  /* 짙은 빨강 */
+  font-weight: 700;
+}
+
+/* 이벤트 리스트 */
+.event-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;        /* 줄간격 */
+}
+
+.event-row {
+  display: flex;
+  gap: 32px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.event-time {
+  width: 120px;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-desc {
+  flex: 1;
+}
+
+/* 반응형: 모바일에서 패딩과 배치 조정 */
+@media (max-width: 900px) {
+  .frame-wrapper {
+    padding: 20px 16px;
+    width: 100%;
+    height: calc(100vh - 24px);
+  }
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .log-card {
+    flex-direction: row;
+    padding: 16px;
+    gap: 20px;
+  }
+  .event-row {
+    gap: 20px;
+    font-size: 18px;
+  }
+  .event-time {
+    width: 90px;
+  }
+}
+
+@media (max-width: 600px) {
+  .log-card {
+    flex-direction: column;
+  }
+  .date-box {
+    border-right: none;
+    border-bottom: 1px solid #dadada;
+    padding-right: 0;
+    padding-bottom: 12px;
+    margin-bottom: 10px;
+  }
+}

@@ -24,3 +24,7 @@ async def root(request: Request):
     context = {"request": request, "title": "CheckInMate"}
     return templates.TemplateResponse("kiosk_main.html", context)
 
+@app.get("/logview", response_class=HTMLResponse)
+async def logView(request: Request, id: int):
+    context = {"request": request, "title": "CheckInMate-Log", "id": id}
+    return templates.TemplateResponse("kiosk_log.html", context)
