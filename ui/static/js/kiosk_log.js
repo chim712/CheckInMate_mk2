@@ -149,9 +149,7 @@ async function loadAttendance() {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:8000/attendance/logs?kioskId=${encodeURIComponent(
-        kioskId
-      )}`
+        `/attendance/logs?kioskId=${encodeURIComponent(kioskId)}`
     );
 
     if (!res.ok) {
