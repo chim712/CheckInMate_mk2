@@ -1,4 +1,4 @@
-# app/attendance_service.py (일부 생략 후 아래 내용 추가)
+# app/service/search.py
 from collections import OrderedDict
 from datetime import timedelta
 
