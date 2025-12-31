@@ -1,4 +1,37 @@
 # app/db.py
+# import os
+# from dotenv import load_dotenv
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker
+#
+# load_dotenv()
+#
+# DATABASE_URL = os.getenv("DATABASE_URL")
+# if not DATABASE_URL:
+#     raise RuntimeError("DATABASE_URL is missing")
+#
+# engine = create_engine(
+#     DATABASE_URL,
+#     pool_pre_ping=True,
+# )
+#
+# SessionLocal = sessionmaker(
+#     bind=engine,
+#     autocommit=False,
+#     autoflush=False,
+# )
+#
+# def get_db():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+
+
+
+# app/db.py - Legacy (2025-11)
+
 import os
 
 from dotenv import load_dotenv
@@ -54,11 +87,10 @@ SessionLocal = sessionmaker(
 
 # FastAPI 의존성용 헬퍼
 def get_db():
-    """
-    FastAPI dependency로 사용할 DB 세션 생성/정리 함수.
-    """
+    # FastAPI dependency로 사용할 DB 세션 생성/정리 함수.
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
