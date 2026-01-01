@@ -49,14 +49,33 @@ body {
   white-space: nowrap;    /* 줄바꿈 금지 */
 }
 
-.header-row {
+.header-row{
   display: flex;
-  align-items: flex-end;
-  padding-bottom: 18px;
-  border-bottom: 2px solid #d8d8d8;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between; /* 좌-우 끝으로 */
+  gap: 12px;                      /* 텍스트-버튼 사이 여백 */
 }
-/* flex-direction 변경 제거 */
+
+.header-text{
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;    /* 화면 좁아지면 자연스럽게 줄바꿈 */
+  gap: 10px;
+  flex: 1;            /* 텍스트 영역이 가능한 공간을 먹도록 */
+  min-width: 0;       /* flex overflow 방지(중요) */
+}
+
+.back-button{
+  margin-left: auto;  /* 혹시 space-between이 깨져도 우측 밀착 */
+  white-space: nowrap;
+  padding: 15px 30px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
+  cursor: pointer;
+  font-size: 15pt;
+}
+.back-button:hover{ background:#e6e6e6; }
 
 
 .user-name {

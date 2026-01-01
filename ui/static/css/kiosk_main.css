@@ -346,6 +346,8 @@ body {
   pointer-events: none;
 }
 
+
+
 /* 작은 화면 보정 */
 /*
 @media (max-width: 768px) {
@@ -506,4 +508,15 @@ body {
 
 .modal-btn.secondary:hover {
   background: #e5e7eb;
+}
+
+.modal-btn.danger {
+  background: #e53935;
+  color: #fff;
+  border: none;
+}
+
+.modal-btn.danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

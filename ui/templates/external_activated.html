@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>재실 인원 조회</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 24px;
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 28px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    .muted { color: #666; }
+    .error { color: #b00020; }
+    .ok { color: #1b5e20; }
+
+    .meta {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
+    .meta strong {
+      font-size: 18px;
+    }
+
+    .day-card {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+    .day-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .day-title .date { font-weight: 700; }
+    .day-title .dow { color: #666; }
+
+    .events {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .events li {
+      margin: 6px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid #ccc;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-left: 8px;
+      color: #333;
+    }
+    .tag.active {
+      border-color: #6aa84f;
+    }
+  </style>
+</head>
+<body>
+  <h1>재실 인원 조회</h1>
+
+  <div class="row">
+    <button id="btn">새로고침</button>
+    <button id="clearBtn" type="button">지우기</button>
+  </div>
+
+  <div id="status" class="status muted">새로고침을 누르세요.</div>
+
+  <div id="meta" class="meta" style="display:none;"></div>
+  <div id="logs"></div>
+
+  <script>
+    // 기대 API:
+    // GET /attendance/active
+    // {
+    //   totalCount: number,
+    //   list: [{ memberId, kioskId, name }]
+    // }
+    const API_PATH = "/attendance/activated";
+
+    const btnEl = document.getElementById("btn");
+    const clearBtnEl = document.getElementById("clearBtn");
+    const statusEl = document.getElementById("status");
+    const metaEl = document.getElementById("meta");
+    const logsEl = document.getElementById("logs");
+
+    function setStatus(msg, cls) {
+      statusEl.className = `status ${cls || "muted"}`;
+      statusEl.textContent = msg;
+    }
+
+    function clearView() {
+      metaEl.style.display = "none";
+      metaEl.innerHTML = "";
+      logsEl.innerHTML = "";
+      setStatus("새로고침을 누르세요.", "muted");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderActiveList(data) {
+      logsEl.innerHTML = "";
+
+      if (!data || typeof data !== "object") {
+        setStatus("응답 형식이 올바르지 않습니다.", "error");
+        return;
+      }
+
+      const totalCount = Number(data.totalCount ?? 0);
+      const list = Array.isArray(data.list) ? data.list : [];
+
+      metaEl.style.display = "block";
+      metaEl.innerHTML = `
+        <div><strong>총 ${escapeHtml(totalCount)}명</strong></div>
+        <div class="muted">status = ACTIVE 기준</div>
+      `;
+
+      if (list.length === 0) {
+        setStatus("재실 인원이 없습니다.", "muted");
+        return;
+      }
+
+      const sorted = [...list].sort((a, b) =>
+        String(a.name ?? "").localeCompare(String(b.name ?? ""))
+      );
+
+      const card = document.createElement("div");
+      card.className = "day-card";
+
+      const title = document.createElement("div");
+      title.className = "day-title";
+      title.innerHTML = `
+        <div class="date">재실 목록</div>
+        <div class="dow"><span class="tag active">active</span></div>
+      `;
+      card.appendChild(title);
+
+      const ul = document.createElement("ul");
+      ul.className = "events";
+
+      for (const m of sorted) {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${escapeHtml(m.name)}
+          <span class="tag">LastUpdate: ${escapeHtml(m.time)}</span>
+        `;
+        ul.appendChild(li);
+      }
+
+      card.appendChild(ul);
+      logsEl.appendChild(card);
+
+      setStatus(`조회 성공: ${sorted.length}명 표시했습니다.`, "ok");
+    }
+
+    async function onRefresh() {
+      btnEl.disabled = true;
+      setStatus("요청 중...", "muted");
+
+      try {
+        const res = await fetch(API_PATH, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          setStatus(`요청 실패: HTTP ${res.status}\n${text}`, "error");
+          return;
+        }
+
+        const data = await res.json();
+        renderActiveList(data);
+
+      } catch (e) {
+        setStatus(`네트워크 오류: ${String(e)}`, "error");
+      } finally {
+        btnEl.disabled = false;
+      }
+    }
+
+    btnEl.addEventListener("click", onRefresh);
+    clearBtnEl.addEventListener("click", clearView);
+
+    // 페이지 로드시 1회 자동 조회 (원치 않으면 제거 가능)
+    onRefresh();
+  </script>
+</body>
+</html>

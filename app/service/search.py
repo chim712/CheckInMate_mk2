@@ -1,10 +1,16 @@
 # app/service/search.py
 from collections import OrderedDict
 from datetime import timedelta
+from zoneinfo import ZoneInfo
+
+KST = ZoneInfo("Asia/Seoul")
+UTC = ZoneInfo("UTC")
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi import HTTPException
+
+from app.service.session import cleanup_expired_sessions
 
 
 def get_attendance_data(db: Session, kiosk_id: int) -> dict:
@@ -12,12 +18,13 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
     kioskId 기준으로 Member + AttendanceLog를 조회하여
     프론트에서 사용하는 attendanceData JSON 형태로 변환한다.
     """
+    cleanup_expired_sessions(db)
 
     # 1) 우선 회원부터 확인 (없으면 404)
     member = db.execute(
         text("""
         SELECT id, name, status
-        FROM dbo.Member
+        FROM Member
         WHERE kiosk_id = :kiosk_id
           AND deleted_at IS NULL
         """),
@@ -34,7 +41,7 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
     rows = db.execute(
         text("""
         SELECT event_time, event_type
-        FROM dbo.AttendanceLog
+        FROM AttendanceLog
         WHERE member_id = :member_id
         ORDER BY event_time ASC
         """),
@@ -82,6 +89,54 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
         day_map[date_str]["events"].append({
             "time": time_str,
             "type": (r["event_type"] or "").lower()
+        })
+
+    return result
+
+
+
+
+def get_active_attendance_list(db: Session) -> dict:
+    """
+    현재 재실 중인(ACTIVE) 회원 목록을 반환한다.
+    - 요청 시 cleanup 수행
+    - Member.status = 'ACTIVE' 기준
+    """
+    cleanup_expired_sessions(db)
+
+    rows = db.execute(
+        text("""
+        SELECT id, kiosk_id, name, updated_at
+        FROM Member
+        WHERE status = 'ACTIVE'
+          AND deleted_at IS NULL
+        ORDER BY name ASC
+        """)
+    ).mappings().all()
+
+    result = {
+        "totalCount": len(rows),
+        "list": []
+    }
+
+    for r in rows:
+        updated_at: datetime | None = r["updated_at"]
+
+        if updated_at:
+            # DB에서 naive UTC로 오는 경우
+            if updated_at.tzinfo is None:
+                updated_at = updated_at.replace(tzinfo=UTC)
+
+            updated_at_kst = updated_at.astimezone(KST)
+            time_str = updated_at_kst.strftime("%Y-%m-%d %H:%M")
+        else:
+            time_str = None
+
+        result["list"].append({
+            "memberId": r["id"],
+            "kioskId": r["kiosk_id"],
+            "name": r["name"],
+            "time": time_str,
         })
 
     return result
