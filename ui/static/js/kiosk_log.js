@@ -14,29 +14,28 @@ const weekdayMap = {
  * - 마지막이 아닌 start만 "출석 (세션 시작)"으로 표시.
  */
 function buildEventDescription(type, isLastEvent) {
+  const t = (type || "").toLowerCase();
+
+  if (t === "start") {
+    // start는 언제나 세션 시작으로 표기
+    return "출석 (세션 시작)";
+  }
+
   let base;
-  switch (type) {
-    case "start":
-      base = "출석";
-      break;
+  switch (t) {
     case "extend":
       base = "연장";
       break;
     case "end":
-      base = "퇴실";
+      base = "퇴실 (마지막 세션)";
       break;
     default:
       base = type;
   }
 
-  if (isLastEvent) {
+  if (isLastEvent && t != "end") {
     return `${base} (마지막 세션)`;
   }
-
-  if (type === "start") {
-    return "출석 (세션 시작)";
-  }
-
   return base;
 }
 

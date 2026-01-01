@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas import AttendancePingIn, AttendanceEndIn
 from app.service.submit import punch_attendance, end_attendance
-from app.service.search import get_attendance_data
+from app.service.search import get_attendance_data, get_active_attendance_list
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 logger = logging.getLogger(__name__)
@@ -65,3 +65,11 @@ def get_attendance_logs(
     data = get_attendance_data(db, kioskId)
     return data
 
+
+@router.get("/activated")
+def get_activated(db: Session = Depends(get_db)):
+    """
+    재실 인원 조회, Parameter 없음 (초기버전)
+    """
+    data = get_active_attendance_list(db)
+    return data

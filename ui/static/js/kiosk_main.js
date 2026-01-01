@@ -5,7 +5,7 @@ function startClock() {
   const weekdays = [
     "일요일",
     "월요일",
-    "수요일",
+    "화요일",
     "수요일",
     "목요일",
     "금요일",
@@ -86,8 +86,8 @@ function initKeypad() {
         },
         body: JSON.stringify({
           kioskId: trimmed,
-          // 필요하면 추가 필드
-          // timestamp: new Date().toISOString()
+          source: "KIOSK",
+          meta: { userAgent: navigator.userAgent }
         })
       });
 
@@ -119,6 +119,7 @@ function showAttendanceModal(message, id) {
   const msgEl = document.getElementById("attendModalMessage");
   const closeBtn = document.getElementById("modalCloseBtn");
   const logBtn = document.getElementById("modalLogBtn");
+  const checkoutBtn = document.getElementById("modalCheckoutBtn");
 
   if (!overlay || !msgEl) return;
 
@@ -139,6 +140,63 @@ function showAttendanceModal(message, id) {
       window.location.href = "/logview?id="+id;
     };
   }
+
+// 퇴근처리 버튼
+if (checkoutBtn) {
+  checkoutBtn.onclick = async () => {
+    try {
+      checkoutBtn.disabled = true;
+
+      // 필요 시 meta에 추가 정보 넣기(예: 브라우저/화면/시간 등)
+      const payload = {
+        kioskId: id,
+        source: "KIOSK", // 백엔드에서 기본값도 KIOSK지만 명시적으로 보냄
+        meta: {
+          // 프로젝트에서 유용한 메타만 남기는 편이 좋음
+          userAgent: navigator.userAgent,
+          // timestamp: new Date().toISOString(), // 필요하면 사용
+        },
+      };
+
+      // 엔드포인트는 실제 라우팅에 맞춰야 함.
+      // FastAPI에서 end_attendance가 /attendance/end 라우트라면 그에 맞게 변경.
+      const resp = await fetch("/attendance/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        let detail = "";
+        try {
+          const err = await resp.json();
+          // FastAPI 기본 에러 포맷 대응
+          detail =
+            err?.detail
+              ? (typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail))
+              : JSON.stringify(err);
+        } catch (_) {
+          detail = await resp.text().catch(() => "");
+        }
+        throw new Error(`서버 오류: ${resp.status}${detail ? ` - ${detail}` : ""}`);
+      }
+
+      const data = await resp.json();
+      // data 예: { memberId, name, eventType:"END", status:"INACTIVE" }
+
+      // idempotent라서 이미 INACTIVE여도 같은 성공 응답이 올 수 있음
+      const nameText = data?.name ? `(${data.name}) ` : "";
+      alert("퇴근 처리 되었습니다! 오늘도 행복한 하루 되세요.");
+
+      overlay.classList.remove("active");
+    } catch (e) {
+      console.error(e);
+      alert("퇴근 처리에 실패했습니다.");
+    } finally {
+      checkoutBtn.disabled = false;
+    }
+  };
+}
 
   // 배경 클릭 시 닫기 (선택)
   const backdrop = overlay.querySelector(".modal-backdrop");

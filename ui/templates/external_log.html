@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>출석 로그 조회</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    h1 { margin: 0 0 16px; font-size: 28px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input { padding: 10px 12px; font-size: 16px; width: 150px; }
+    button { padding: 8px 14px; font-size: 16px; cursor: pointer; }
+    .status { margin-top: 10px; white-space: pre-wrap; }
+    .muted { color: #666; }
+    .error { color: #b00020; }
+    .ok { color: #1b5e20; }
+
+    .meta { margin-top: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
+    .meta strong { font-size: 18px; }
+
+    .day-card { margin-top: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; }
+    .day-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .day-title .date { font-weight: 700; }
+    .day-title .dow { color: #666; }
+
+    .events { margin: 0; padding-left: 18px; }
+    .events li { margin: 6px 0; }
+
+    .tag { display: inline-block; padding: 2px 8px; border: 1px solid #ccc; border-radius: 999px; font-size: 12px; margin-left: 8px; color: #333; }
+    .tag.start { border-color: #6aa84f; }
+    .tag.extend { border-color: #3c78d8; }
+    .tag.end { border-color: #cc0000; }
+
+    .btn-active-search {
+      padding: 2px 118px
+    }
+
+    .btn-active-search:active {
+      transform: translateY(0);
+    }
+
+    .btn-active-search:disabled {
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>출석 로그 조회</h1>
+
+  <div class="row">
+    <input id="kioskId" type="text" inputmode="numeric" placeholder="ID 입력" />
+    <button id="btn">조회</button>
+    <button id="clearBtn" type="button">지우기</button>
+  </div>
+
+  <div id="status" class="status muted">Kiosk ID를 입력하고 조회를 누르세요.</div>
+  <br>
+  <div>
+    <button id="activeSearch" class="btn-active-search" onclick="location.href='/room'">재실 인원 조회</button>
+  </div>
+
+  <div id="meta" class="meta" style="display:none;"></div>
+  <div id="logs"></div>
+
+  <script>
+    // 이 페이지를 127.0.0.1에서 서빙 중이므로 상대경로 사용(권장)
+    const API_PATH = "/attendance/logs"; // GET /attendance/logs?kioskId=1129
+
+    const kioskIdEl = document.getElementById("kioskId");
+    const btnEl = document.getElementById("btn");
+    const clearBtnEl = document.getElementById("clearBtn");
+    const statusEl = document.getElementById("status");
+    const metaEl = document.getElementById("meta");
+    const logsEl = document.getElementById("logs");
+
+    function setStatus(msg, cls) {
+      statusEl.className = `status ${cls || "muted"}`;
+      statusEl.textContent = msg;
+    }
+
+    function clearView() {
+      metaEl.style.display = "none";
+      metaEl.innerHTML = "";
+      logsEl.innerHTML = "";
+      setStatus("kioskId를 입력하고 조회를 누르세요.", "muted");
+    }
+
+    function isNaturalNumber(v) {
+      // 자연수: 1,2,3...
+      const n = Number(v);
+      return Number.isInteger(n) && n > 0;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function typeTag(type) {
+      const t = (type || "").toLowerCase();
+      const safe = escapeHtml(t || "unknown");
+      const cls = (t === "start" || t === "extend" || t === "end") ? t : "";
+      return `<span class="tag ${cls}">${safe}</span>`;
+    }
+
+    function renderAttendanceData(data) {
+      // 기대 구조:
+      // { userId, userName, logData: [ {date, day, events:[{time,type}]} ] }
+
+      logsEl.innerHTML = "";
+
+      if (!data || typeof data !== "object") {
+        setStatus("응답 형식이 올바르지 않습니다.", "error");
+        return;
+      }
+
+      const userId = data.userId;
+      const userName = data.userName;
+      const logData = data.logData;
+
+      metaEl.style.display = "block";
+      metaEl.innerHTML = `
+        <div><strong>${escapeHtml(userName ?? "")}</strong></div>
+        <div class="muted">userId: ${escapeHtml(userId ?? "")}</div>
+      `;
+
+      if (!Array.isArray(logData) || logData.length === 0) {
+        setStatus("조회된 로그가 없습니다.", "muted");
+        return;
+      }
+
+      // 날짜 오름차순은 서버에서 이미 ASC로 묶었지만, 혹시 몰라 정렬
+      const sorted = [...logData].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+      for (const day of sorted) {
+        const date = day.date ?? "";
+        const dow = (day.day ?? "").toLowerCase();
+        const events = Array.isArray(day.events) ? day.events : [];
+
+        const card = document.createElement("div");
+        card.className = "day-card";
+
+        const title = document.createElement("div");
+        title.className = "day-title";
+        title.innerHTML = `
+          <div class="date">${escapeHtml(date)}</div>
+          <div class="dow">${escapeHtml(dow)}</div>
+        `;
+        card.appendChild(title);
+
+        if (events.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.textContent = "이 날짜에 이벤트가 없습니다.";
+          card.appendChild(empty);
+        } else {
+          // 시간 오름차순 정렬
+          const evSorted = [...events].sort((a, b) => String(a.time).localeCompare(String(b.time)));
+
+          const ul = document.createElement("ul");
+          ul.className = "events";
+
+          for (const ev of evSorted) {
+            const li = document.createElement("li");
+            const time = ev.time ?? "";
+            const type = ev.type ?? "";
+            li.innerHTML = `${escapeHtml(time)} ${typeTag(type)}`;
+            ul.appendChild(li);
+          }
+          card.appendChild(ul);
+        }
+
+        logsEl.appendChild(card);
+      }
+
+      setStatus(`조회 성공: ${sorted.length}일치 로그를 표시했습니다.`, "ok");
+    }
+
+    async function onSearch() {
+      const kioskId = kioskIdEl.value.trim();
+
+      if (!isNaturalNumber(kioskId)) {
+        setStatus("kioskId는 숫자만 허용됩니다.", "error");
+        return;
+      }
+
+      btnEl.disabled = true;
+      setStatus("요청 중...", "muted");
+
+      try {
+        const url = `${API_PATH}?kioskId=${encodeURIComponent(kioskId)}`;
+        const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+
+        if (!res.ok) {
+          const text = await res.text();
+          setStatus(`요청 실패: HTTP ${res.status}\n${text}`, "error");
+          return;
+        }
+
+        const data = await res.json();
+        renderAttendanceData(data);
+
+      } catch (e) {
+        setStatus(`네트워크 오류: ${String(e)}`, "error");
+      } finally {
+        btnEl.disabled = false;
+      }
+    }
+
+    btnEl.addEventListener("click", onSearch);
+    kioskIdEl.addEventListener("keydown", (e) => { if (e.key === "Enter") onSearch(); });
+    clearBtnEl.addEventListener("click", clearView);
+  </script>
+</body>
+</html>
