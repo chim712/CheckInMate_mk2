@@ -5,7 +5,7 @@ function startClock() {
   const weekdays = [
     "일요일",
     "월요일",
-    "수요일",
+    "화요일",
     "수요일",
     "목요일",
     "금요일",
@@ -86,8 +86,8 @@ function initKeypad() {
         },
         body: JSON.stringify({
           kioskId: trimmed,
-          // 필요하면 추가 필드
-          // timestamp: new Date().toISOString()
+          source: "KIOSK",
+          meta: { userAgent: navigator.userAgent }
         })
       });
 
@@ -186,7 +186,7 @@ if (checkoutBtn) {
 
       // idempotent라서 이미 INACTIVE여도 같은 성공 응답이 올 수 있음
       const nameText = data?.name ? `(${data.name}) ` : "";
-      alert(`${nameText}퇴근 처리 완료: ${data?.eventType ?? "END"} / ${data?.status ?? "INACTIVE"}`);
+      alert("퇴근 처리 되었습니다! 오늘도 행복한 하루 되세요.");
 
       overlay.classList.remove("active");
     } catch (e) {
