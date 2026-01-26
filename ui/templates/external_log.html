@@ -168,8 +168,9 @@
           for (const ev of evSorted) {
             const li = document.createElement("li");
             const time = ev.time ?? "";
+            const source = ev.source ?? "";
             const type = ev.type ?? "";
-            li.innerHTML = `${escapeHtml(time)} ${typeTag(type)}`;
+            li.innerHTML = `${escapeHtml(time)} (${escapeHtml(source)}) ${typeTag(type)}`;
             ul.appendChild(li);
           }
           card.appendChild(ul);

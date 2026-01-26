@@ -40,7 +40,7 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
     # 2) AttendanceLog 전체(혹은 나중에 기간 필터 추가 가능)
     rows = db.execute(
         text("""
-        SELECT event_time, event_type
+        SELECT event_time, event_type, source
         FROM AttendanceLog
         WHERE member_id = :member_id
         ORDER BY event_time ASC
@@ -88,7 +88,8 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
         # 이벤트 추가 (type은 소문자로 내려줌: start/extend/end)
         day_map[date_str]["events"].append({
             "time": time_str,
-            "type": (r["event_type"] or "").lower()
+            "type": (r["event_type"] or "").lower(),
+            "source": (r["source"] or "").lower()
         })
 
     return result
