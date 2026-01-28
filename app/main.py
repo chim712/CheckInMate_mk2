@@ -21,7 +21,7 @@ app.mount("/static", StaticFiles(directory="ui/static"), name="static")
 templates = Jinja2Templates(directory="ui/templates")
 
 
-ALLOWED_IPS = {"127.0.0.1", "192.168.35.7", "210.124.110.147", "220.69.207.5"}
+ALLOWED_IPS = {"127.0.0.1", "192.168.35.7", "192.168.35.80", "210.124.110.147", "220.69.207.5"}
 
 def ip_guard(request: Request):
     client_ip = request.client.host
