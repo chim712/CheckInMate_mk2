@@ -1,12 +1,12 @@
 # app/main.py
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException
 from starlette.requests import Request
 from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-from app.db import engine
+from app.db.db import engine
 from app.models import Base
 from app.api import attendance
 
@@ -46,7 +46,7 @@ async def room(request: Request):
 @app.get("/logview", response_class=HTMLResponse, dependencies=[Depends(ip_guard)])
 async def logView(request: Request, id: int):
     context = {"request": request, "title": "CheckInMate-Log", "id": id}
-    return templates.TemplateResponse("kiosk_log.html", context)
+    return templates.TemplateResponse("kiosk_log_800.html", context)
 
 @app.get("/kiosk", response_class=HTMLResponse, dependencies=[Depends(ip_guard)])
 async def kiosk(request: Request):

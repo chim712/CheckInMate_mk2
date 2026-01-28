@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.db import get_db
+from app.db.db import get_db
 from app.schemas import AttendancePingIn, AttendanceEndIn
 from app.service.submit import punch_attendance, end_attendance
 from app.service.search import get_attendance_data, get_active_attendance_list

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>출석 인증기 – 오늘 기록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/css/kiosk_log_800.css" />
+</head>
+<body>
+  <div class="kiosk-frame">
+    <div class="grid">
+      <!-- LEFT -->
+      <section class="panel left">
+        <div class="card user">
+          <span class="user-name" id="userName">-</span>
+          <span class="user-sub" id="userSub"> 님의 출석 기록은 다음과 같습니다.</span>
+        </div>
+
+        <div class="card weekly" id="weeklyCard">
+          <div class="card-title">이번 주 활동 기록</div>
+
+          <!-- 주간 요약이 있을 때 -->
+          <div class="weekly-body" id="weeklyBody" hidden>
+            <!-- 상단: 도넛 + 시간 -->
+            <div class="weekly-top">
+              <div class="donut" id="donut" aria-label="주간 목표 달성률">
+                <div class="donut-center">
+                  <div class="donut-pct" id="donutPct">0%</div>
+                </div>
+              </div>
+
+              <div class="weekly-main">
+                <div class="weekly-days-inline" id="weeklyDays">이번 주 출근일: -</div>
+                <div class="weekly-time" id="weeklyTime">-</div>
+                <div class="weekly-sub" id="weeklyGoal">-</div>
+              </div>
+            </div>
+
+            <div class="weekly-meta">
+              <div class="pill" id="weeklyRange">기간: -</div>
+            </div>
+          </div>
+
+          <!-- 주간 요약이 없을 때 -->
+          <div class="weekly-empty" id="weeklyEmpty">
+            주간 요약 데이터가 없습니다.
+          </div>
+        </div>
+
+        <!-- 하단 바: 안내/URL + 뒤로가기 + QR 이미지 -->
+        <div class="bottom-bar">
+          <div class="bottom-left">
+            <div class="qr-hint">
+              <div>📱 상세 기록은 QR로 확인하세요</div>
+              <div class="qr-url" id="qrUrlText">-</div>
+            </div>
+
+            <button class="back-button small" type="button" onclick="location.href='/kiosk'">
+              뒤로가기
+            </button>
+          </div>
+
+          <div class="qr-image-wrap" aria-label="상세 기록 QR">
+            <img class="qr-image" src="/static/img/statusQR.png" alt="상세 기록 QR" />
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <section class="panel right">
+        <div class="right-header">
+          <div class="today-date" id="todayDate">-</div>
+          <div class="today-weekday" id="todayWeekday">-</div>
+        </div>
+
+        <div class="today-scroll" id="todayList">
+          <!-- JS 렌더 -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/static/js/kiosk_log_800.js"></script>
+</body>
+</html>

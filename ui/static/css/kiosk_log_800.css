@@ -1,0 +1,366 @@
+:root{
+  --bg: #eef2f7;
+  --panel: #ffffff;
+  --border: rgba(148,163,184,.35);
+  --text: #0f172a;
+  --muted: #64748b;
+
+  --radius: 18px;
+  --shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+
+  --gap: 14px;
+  --pad: 14px;
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: radial-gradient(circle at top, #f8fafc, var(--bg) 60%);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  color: var(--text);
+}
+
+/* === 800x480 고정 프레임 === */
+.kiosk-frame{
+  width: 800px;
+  height: 480px;
+  background: transparent;
+}
+
+/* 좌우 1:1 */
+.grid{
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+.panel{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--pad);
+  display:flex;
+  flex-direction:column;
+  min-width: 0;
+}
+
+/* LEFT */
+.card{
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.card + .card{ margin-top: 10px; }
+
+.user-name{
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.1em;
+}
+
+.card-title{
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.user-title{
+  display:flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.user-sub{
+  font-size: 14px;
+  font-weight: 800;
+  confirming: none;
+  color: var(--muted); /* 요일 표시처럼 */
+  white-space: nowrap;
+}
+
+
+/* ===== 주간 카드(도넛 포함) ===== */
+.weekly-body{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.weekly-top{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.weekly-main{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+}
+
+.weekly-time{
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.weekly-sub{
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.weekly-meta{
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+
+.pill{
+  font-size: 12.5px;
+  color: var(--text);
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 8px 10px;
+}
+
+.weekly-empty{
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 6px 0;
+}
+
+/* 도넛 */
+.donut{
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: conic-gradient(#2563eb 0deg, #e5e7eb 0deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+}
+
+.donut-center{
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(148,163,184,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.donut-pct{
+  font-size: 25px;
+  font-weight: 900;
+}
+
+/* 시간 위에 올라가는 출근일 라인 */
+.weekly-days-inline{
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+/* ===== 하단 바(2번 스케치 스타일) ===== */
+.bottom-bar{
+  margin-top: auto;                 /* 좌측 패널 하단 고정 */
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 12px;
+
+  padding-top: 10px;
+}
+
+.bottom-left{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.qr-hint{
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.qr-url{
+  margin-top: 6px;
+  font-size: 12px;
+  color: #334155;
+  word-break: break-all;
+}
+
+.back-button{
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.55);
+  background: #f1f5f9;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.back-button:hover{ background:#e9eff8; }
+
+/* 작은 뒤로가기(스케치처럼) */
+.back-button.small{
+  height: 55px;
+  width: 120px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.qr-image-wrap{
+  width: 110px;
+  height: 110px;
+  border-radius: 14px;
+  border: 2px solid rgba(15,23,42,.18);
+  background: #fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex: 0 0 auto;
+}
+
+.qr-image{
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+/* RIGHT */
+.right-header{
+  padding: 6px 4px 10px 4px;
+  border-bottom: 1px solid rgba(148,163,184,.35);
+}
+
+.today-date{
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.today-weekday{
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.today-scroll{
+  margin-top: 12px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.today-scroll::-webkit-scrollbar{ width: 8px; }
+.today-scroll::-webkit-scrollbar-thumb{
+  background: rgba(100,116,139,.35);
+  border-radius: 999px;
+}
+
+.bullet{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(148,163,184,.30);
+  border-radius: 12px;
+  background: #ffffff;
+  margin-bottom: 8px;
+}
+
+.b-time{
+  width: 78px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  color: #0f172a;
+  flex: 0 0 auto;
+}
+
+.b-mid{
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge{
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,.45);
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.badge.start{ border-color: rgba(34,197,94,.55); }
+.badge.extend{ border-color: rgba(59,130,246,.55); }
+.badge.end{ border-color: rgba(239,68,68,.55); }
+
+.empty-note{
+  padding: 14px 10px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px dashed rgba(148,163,184,.55);
+  color: #475569;
+  font-weight: 800;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+
+/* ================================
+   flex 내부 스크롤 강제 (중요)
+   ================================ */
+
+/* panel이 flex 컨테이너일 때 자식 스크롤 허용 */
+.panel{
+  min-height: 0;
+}
+
+/* 우측 패널은 내부 스크롤만 허용 */
+.panel.right{
+  overflow: hidden; /* 패널 바깥으로 튀어나가는 것 방지 */
+}
+
+/* 실제 스크롤 영역 */
+.today-scroll{
+  min-height: 0;    /* ★ 이 줄이 핵심 */
+  flex: 1;
+  overflow-y: auto;
+}
+
+
+
+
+.today-scroll.dragging{
+  cursor: grabbing;
+  user-select: none;
+}

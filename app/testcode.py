@@ -1,6 +1,6 @@
 # app/testcode.py
 from sqlalchemy import text
-from db import engine
+from app.db.db import engine
 
 with engine.connect() as conn:
     stmt = text("SELECT TOP (1) name FROM sys.tables;")
