@@ -30,6 +30,9 @@ body{
   width: 800px;
   height: 480px;
   background: transparent;
+
+  padding: 15px;
+  box-sizing: border-box;
 }
 
 /* 좌우 1:1 */
@@ -111,7 +114,7 @@ body{
 }
 
 .weekly-time{
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
 }
 
@@ -144,8 +147,8 @@ body{
 
 /* 도넛 */
 .donut{
-  width: 130px;
-  height: 130px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   background: conic-gradient(#2563eb 0deg, #e5e7eb 0deg);
   display:flex;
@@ -155,8 +158,8 @@ body{
 }
 
 .donut-center{
-  width: 86px;
-  height: 86px;
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
   background: #fff;
   border: 1px solid rgba(148,163,184,.35);
@@ -223,7 +226,7 @@ body{
 
 /* 작은 뒤로가기(스케치처럼) */
 .back-button.small{
-  height: 55px;
+  height: 45px;
   width: 120px;
   border-radius: 12px;
   font-size: 14px;
@@ -249,9 +252,40 @@ body{
 }
 
 /* RIGHT */
+
 .right-header{
-  padding: 6px 4px 10px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0px 7px 10px 4px;
   border-bottom: 1px solid rgba(148,163,184,.35);
+}
+
+/* 왼쪽: 날짜 */
+.right-header-left{
+  display: flex;
+  flex-direction: column;
+}
+
+/* 오른쪽: 합계 */
+.right-header-right{
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.today-total{
+  font-size: 14px;          /* 요일과 동일 */
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.session-total{
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
 }
 
 .today-date{

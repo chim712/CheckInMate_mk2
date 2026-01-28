@@ -129,8 +129,8 @@
       </div>
       <div class="legend" style="margin-top:10px;">
         <span><span class="badge markX">X</span> 30분 미만</span>
-        <span><span class="badge markT">△</span> 3시간 미만</span>
-        <span><span class="badge markO">O</span> 3시간 이상</span>
+        <span><span class="badge markT">▲</span> 3시간 미만</span>
+        <span><span class="badge markO">O</span> 3시간 이상 (주말 30분 이상)</span>
       </div>
       <div class="divider"></div>
       <div class="grid" id="monthGrid"></div>
@@ -156,7 +156,7 @@
     const API_PATH = "/attendance/logs"; // GET /attendance/logs?kioskId=1129
 
     // 주간 목표(원하시는 값으로 바꾸면 됨)
-    const WEEKLY_GOAL_HOURS = 10;
+    const WEEKLY_GOAL_HOURS = 30;
 
     const kioskIdEl = document.getElementById("kioskId");
     const btnEl = document.getElementById("btn");
@@ -418,7 +418,7 @@
 
     function markForMinutes(mins){
       if(mins < 30) return { ch:"X", cls:"markX" };
-      if(mins < 180) return { ch:"△", cls:"markT" };
+      if(mins < 180) return { ch:"▲", cls:"markT" };
       return { ch:"O", cls:"markO" };
     }
 

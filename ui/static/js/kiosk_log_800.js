@@ -157,6 +157,33 @@ function computeWeekSummaryFromLogData(logData, goalHours = WEEKLY_GOAL_HOURS) {
   };
 }
 
+// 당일 출석 시간 및 현재 세션 누적 시간
+function calcDurationSec(events) {
+  let total = 0;
+  let start = null;
+
+  for (const ev of events) {
+    const t = ev.type;
+    const sec = parseHHMMSS_toSec(ev.time);
+    if (sec == null) continue;
+
+    if (t === "start") {
+      start = sec;
+    } else if ((t === "extend" || t === "end") && start != null) {
+      total = sec - start;
+    }
+  }
+  return total;
+}
+
+function formatHM(sec) {
+  const m = Math.floor(sec / 60);
+  const h = Math.floor(m / 60);
+  return `${h}시간 ${m % 60}분`;
+}
+
+
+
 // 도넛이 HTML/CSS에 있으면 자동 반영 (없으면 조용히 무시)
 function setDonutPercent(pct) {
   const donut = document.getElementById("donut");
@@ -184,6 +211,24 @@ function renderToday(entryOrNull, kioskId) {
   const listEl = document.getElementById("todayList");
   listEl.innerHTML = "";
 
+  const todayTotalEl = document.getElementById("todayTotal");
+  const sessionTotalEl = document.getElementById("sessionTotal");
+
+  if (!entryOrNull || !entryOrNull.events?.length) {
+    todayTotalEl.textContent = "오늘 합계 -";
+    sessionTotalEl.textContent = "이번 세션 -";
+  } else {
+    const events = entryOrNull.events;
+
+    // 오늘 전체 누적
+    const todaySec = calcDayDurationSeconds(events);
+    todayTotalEl.textContent = `오늘 합계 ${formatHM(todaySec)}`;
+
+    // 이번 세션: 마지막 start 기준
+    const sessionSec = calcDurationSec(events);
+    sessionTotalEl.textContent = `이번 세션 ${formatHM(sessionSec)}`;
+  }
+
   const events = (entryOrNull?.events || [])
   .slice()
   .sort((a, b) => String(b.time || "").localeCompare(String(a.time || "")));
@@ -192,7 +237,7 @@ function renderToday(entryOrNull, kioskId) {
     box.className = "empty-note";
     box.innerHTML = `
       <div>오늘 기록이 없습니다.</div>
-      <div>상세 기록은 QR로 확인하세요.</div>
+      <div>과거 기록은 QR로 확인하세요.</div>
     `;
     listEl.appendChild(box);
     return;
@@ -210,7 +255,7 @@ function renderToday(entryOrNull, kioskId) {
     const mid = document.createElement("div");
     mid.className = "b-mid";
     // 서버가 확정 기기명 내려준다는 전제: source 사용
-    const src = ev.source ? `(${ev.source})` : "";
+    const src = ev.source ? `${ev.source}` : "";
     mid.textContent = src || "";
 
     const badge = document.createElement("div");
