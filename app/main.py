@@ -9,11 +9,13 @@ from starlette.templating import Jinja2Templates
 from app.db.db import engine
 from app.models import Base
 from app.api import attendance
+from app.api import admin
 
 # create app
 app = FastAPI(title="CheckInMate")
 # set router
 app.include_router(attendance.router)
+app.include_router(admin.router)
 
 
 #static, template
@@ -45,15 +47,21 @@ async def room(request: Request):
 
 @app.get("/logview", response_class=HTMLResponse, dependencies=[Depends(ip_guard)])
 async def logView(request: Request, id: int):
-    context = {"request": request, "title": "CheckInMate-Log", "id": id}
+    context = {"request": request, "title": "CheckInMate Log", "id": id}
     return templates.TemplateResponse("kiosk_log_800.html", context)
 
 @app.get("/kiosk", response_class=HTMLResponse, dependencies=[Depends(ip_guard)])
 async def kiosk(request: Request):
-    context = {"request": request, "title": "CheckInMate"}
+    context = {"request": request, "title": "CheckInMate Kiosk"}
     return templates.TemplateResponse("kiosk_main.html", context)
 
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin(request: Request):
+    context = {"request": request, "title": "Admin Log Page", "orgId": 1}
+    return templates.TemplateResponse("admin_log.html", context)

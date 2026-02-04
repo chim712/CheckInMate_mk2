@@ -556,8 +556,9 @@
           for(const ev of events){
             const li = document.createElement("li");
             const time = ev.time ?? "";
+            const device = ev.source ?? "";
             const type = ev.type ?? "";
-            li.innerHTML = `${escapeHtml(time)} ${typeTag(type)}`;
+            li.innerHTML = `${escapeHtml(time)}  (${escapeHtml(device)}) ${typeTag(type)}`;
             ul.appendChild(li);
           }
           card.appendChild(ul);

@@ -66,6 +66,8 @@ def get_attendance_logs(
     return data
 
 
+
+
 @router.get("/activated")
 def get_activated(db: Session = Depends(get_db)):
     """

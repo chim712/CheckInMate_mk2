@@ -141,3 +141,37 @@ def get_active_attendance_list(db: Session) -> dict:
         })
 
     return result
+
+def get_member_list(db: Session, org_id: int) -> dict:
+    """
+    조회하는 기관의 전체 구성원 리스트 반환 (관리페이지용)
+
+    :param db:
+    :param org_id:
+    :return: Member Table in DB
+    """
+    rows = db.execute(
+        text("""
+        SELECT id, kiosk_id, name, status, role
+        FROM Member
+        WHERE org_id = :org_id
+          AND deleted_at IS NULL
+        ORDER BY name ASC
+        """),
+        {"org_id": org_id},
+    ).mappings().all()
+
+    return {
+        "totalCount": len(rows),
+        "list": [
+            {
+                "memberId": r["id"],
+                "kioskId": r["kiosk_id"],
+                "name": r["name"],
+                "status": r["status"],
+                "role": r["role"],
+            }
+            for r in rows
+        ]
+    }
+

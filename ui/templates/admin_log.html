@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>관리자 출석 로그</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --fg:#111;
+      --muted:#666;
+      --line:#e6e6e6;
+      --card:#fff;
+      --soft:#f6f7f9;
+      --ok:#1b5e20;
+      --warn:#8a6d00;
+      --bad:#b00020;
+      --primary:#1f4bd8;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+
+    /* Layout */
+    .app{display:flex;height:100vh;overflow:hidden}
+    .sidebar{
+      width:320px;flex:0 0 auto;border-right:1px solid var(--line);
+      padding:16px;background:#fff;display:flex;flex-direction:column;gap:12px
+    }
+
+    /* Sidebar */
+    .brand{font-size:18px;font-weight:900;letter-spacing:-0.2px}
+    .sub{color:var(--muted);font-size:12px}
+    .row{display:flex;gap:8px;align-items:center}
+    input{
+      width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px
+    }
+    .list{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .item{
+      padding:12px 12px;border-bottom:1px solid var(--line);cursor:pointer;
+      display:flex;justify-content:space-between;gap:10px
+    }
+    .item:last-child{border-bottom:none}
+    .item:hover{background:var(--soft)}
+    .item.active{background:rgba(31,75,216,.08)}
+    .name{font-weight:800}
+    .meta2{color:var(--muted);font-size:12px;margin-top:2px}
+    .badge{
+      padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;
+      color:var(--muted);background:var(--soft);height:fit-content
+    }
+    .badge.active{color:var(--ok);border-color:rgba(27,94,32,.25);background:rgba(27,94,32,.06)}
+    .badge.inactive{color:var(--bad);border-color:rgba(176,0,32,.25);background:rgba(176,0,32,.06)}
+
+    /* Content: external_log.html styles (요약/월별 렌더) */
+    .topbar{ flex: 0 0 auto; }
+    .status{ flex: 0 0 auto; }
+    .muted{color:var(--muted)}
+    .error{color:var(--bad)}
+    .ok{color:var(--ok)}
+
+    .meta-card{margin-top:14px;padding:18px 20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+    .meta-card strong{font-size:18px}
+
+    .section{margin-top:14px;padding:18px 20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+    .section h2{margin:0 0 10px;font-size:18px}
+    .divider{height:1px;background:var(--line);margin:12px 0}
+
+    .weekly{display:flex;gap:14px;align-items:center}
+    .donut{width:108px;height:108px;flex:0 0 auto}
+    .weekly .numbers{display:flex;flex-direction:column;gap:6px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border-radius:999px;color:var(--muted);font-size:13px}
+    .big{font-size:22px;font-weight:800;letter-spacing:-0.2px}
+    .small{font-size:13px;color:var(--muted)}
+
+    .month-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .month-nav{display:flex;align-items:center;gap:8px}
+    .navbtn{padding:8px 10px;border-radius:12px;background:#fff;border:1px solid var(--line);cursor:pointer}
+    .month-title{font-weight:800}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    .legend span{display:inline-flex;align-items:center;gap:6px}
+    .badge2{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;background:var(--soft);border:1px solid var(--line);font-weight:700}
+
+    .grid{margin-top:10px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    .cell{border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff;min-height:58px}
+    .cell .d{font-size:12px;color:var(--muted)}
+    .cell .m{margin-top:6px;font-size:16px;font-weight:900}
+    .cell.off{opacity:.35;background:var(--soft)}
+    .markX{color:var(--bad)}
+    .markT{color:var(--warn)}
+    .markO{color:var(--ok)}
+    .cell.today{border-color:var(--primary);box-shadow:0 0 0 2px rgba(31,75,216,.12)}
+
+    .day-card{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .day-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+    .day-title .date{font-weight:900}
+    .day-title .dow{color:var(--muted);font-size:13px}
+    .day-title .total{color:var(--muted);font-size:13px}
+    .events{margin:0;padding-left:18px}
+    .events li{margin:6px 0;font-size:14px}
+
+    .tag{display:inline-block;padding:2px 8px;border:1px solid #ccc;border-radius:999px;font-size:12px;margin-left:8px;color:#333}
+    .tag.start{border-color:#6aa84f}
+    .tag.extend{border-color:#3c78d8}
+    .tag.end{border-color:#cc0000}
+
+    .title{
+      font-size:22px;font-weight:900;letter-spacing:-0.2px;margin:0
+    }
+    .hint{color:var(--muted);font-size:12px;margin-top:4px}
+
+    /* split 레이아웃만 확정 동작으로 재정의 */
+    .content{
+      flex:1 1 auto;
+      background:#fafbfc; 
+      overflow:hidden;
+    }
+    /* 화면 높이를 기준으로 우측을 '세로 full' 만들기 위한 기반 */
+    .content-inner{
+      height:100%;
+      min-height:0;
+      padding:18px 22px 24px;
+
+      display:grid;                 /* ★ flex → grid */
+      grid-template-rows: auto auto 1fr; /* topbar, status, split */
+      gap:0;
+      overflow:hidden;              /* 바깥 스크롤 차단 */
+    }
+
+    /* 좌 50% / 우 50% */
+    .split{
+      grid-row:3;            /* content-inner의 3번째 행 */
+      min-height:0;
+      overflow:hidden;
+
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      align-items:stretch;
+    }
+
+    /* LEFT: 세로 스택 */
+    .leftcol{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+      overflow:hidden;
+    }
+
+    /* RIGHT: 세로 full + 내부 스크롤 */
+    .rightcol{
+      min-height: 0;
+      display:flex;
+      align-self: stretch;   /* ★ grid 아이템 높이 꽉 채움 */
+      overflow: hidden;      /* ★ 우측 컬럼은 숨기고 */
+    }
+
+    /* 우측 카드가 컬럼 높이를 꽉 채움 */
+    #monthDetailSection{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* 실제 스크롤 영역은 monthLogs만 */
+    #monthLogs{
+      flex:1 1 auto;
+      min-height:0;
+      overflow-y:auto;
+      padding-right:6px;
+
+      overscroll-behavior: contain; /* ★ 바깥 스크롤로 튀는 것 방지 */
+      -webkit-overflow-scrolling: touch; /* ★ 부드러운 스크롤(크롬/사파리 계열) */
+    }
+
+    /* 반응형: 좁으면 세로 */
+    @media (max-width: 1200px){
+      .split{ grid-template-columns: 1fr; }
+      .rightcol{ height:auto; }
+    }
+
+    /* ★ 컬럼 내부에서는 margin-top 제거(간격은 gap로만 관리) */
+    .leftcol .meta-card,
+    .leftcol .section,
+    .rightcol .section{
+      margin-top: 0;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">관리자 출석 로그</div>
+      <div class="sub">orgId: <span id="orgIdText"></span></div>
+    </div>
+
+    <div class="row">
+      <input id="q" type="text" placeholder="멤버 검색 (이름 / kioskId)" />
+    </div>
+
+    <div id="memberStatus" class="sub muted">멤버 목록 로딩 중...</div>
+
+    <div class="list" id="memberList"></div>
+
+    <div class="sub muted">
+      좌측에서 멤버를 선택하면 우측에 상세 로그를 표시합니다.
+    </div>
+  </aside>
+
+  <!-- Content -->
+  <main class="content">
+
+    <div class="content-inner">
+      <div class="topbar">
+        <div>
+          <h1 class="title" id="pageTitle">멤버를 선택하세요</h1>
+          <div class="hint" id="pageSub"> </div>
+        </div>
+      </div>
+
+      <div id="status" class="status muted">대기 중...</div>
+
+      <div class="split">
+        <!-- LEFT: 이름 ~ 달력 -->
+        <div class="leftcol">
+          <div id="meta" class="meta-card" style="display:none;"></div>
+
+          <!-- (1) Weekly -->
+          <div id="weeklySection" class="section" style="display:none;">
+            <h2>이번 주 활동 기록</h2>
+            <div class="weekly">
+              <svg class="donut" viewBox="0 0 120 120" aria-label="Weekly donut">
+                <circle cx="60" cy="60" r="46" fill="none" stroke="#eaecef" stroke-width="14"></circle>
+                <circle id="donutProg" cx="60" cy="60" r="46" fill="none" stroke="#1f4bd8" stroke-width="14"
+                        stroke-linecap="round" transform="rotate(-90 60 60)"
+                        stroke-dasharray="0 289" stroke-dashoffset="0"></circle>
+                <text id="donutPct" x="60" y="66" text-anchor="middle" font-size="22" font-weight="800" fill="#111">0%</text>
+              </svg>
+              <div class="numbers">
+                <div class="big"><span id="weeklyHours">0시간</span> <span class="small">(목표 <span id="weeklyGoal">0시간</span>)</span></div>
+                <div class="pill">기간: <span id="weeklyRange"></span></div>
+                <div class="pill">이번 주 출근일: <span id="weeklyDays"></span>일</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- (2) Monthly summary -->
+          <div id="monthSummarySection" class="section" style="display:none;">
+            <div class="month-head">
+              <h2 style="margin:0;">이번 달 출근 내역</h2>
+              <div class="month-nav">
+                <button class="navbtn" id="prevMonthBtn">←</button>
+                <div class="month-title" id="monthLabel"></div>
+                <button class="navbtn" id="nextMonthBtn">→</button>
+              </div>
+            </div>
+            <div class="legend" style="margin-top:10px;">
+              <span><span class="badge2 markX">X</span> 30분 미만</span>
+              <span><span class="badge2 markT">▲</span> 3시간 미만</span>
+              <span><span class="badge2 markO">O</span> 3시간 이상 (주말 30분 이상)</span>
+            </div>
+            <div class="divider"></div>
+            <div class="grid" id="monthGrid"></div>
+          </div>
+        </div>
+        
+
+        <!-- RIGHT: 로그 카드 -->
+        <div class="rightcol">
+          <!-- (3) Monthly detailed -->
+          <div id="monthDetailSection" class="section" style="display:none;">
+            <div class="month-head">
+              <h2 style="margin:0;">출근 기록 (월별)</h2>
+              <div class="month-nav">
+                <button class="navbtn" id="prevMonthBtn2">←</button>
+                <div class="month-title" id="monthLabel2"></div>
+                <button class="navbtn" id="nextMonthBtn2">→</button>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div id="monthLogs"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  // ====== API 경로 ======
+  const MEMBERS_API = "/admin/members";              // GET /admin/members?orgId=1
+  const LOGS_API = "/attendance/logs";              // GET /attendance/logs?kioskId=1129
+
+  // 템플릿에서 orgId를 주입 못하면 여기서 기본값 사용
+  const ORG_ID = 1;
+
+  // 주간 목표(원하면 조정)
+  const WEEKLY_GOAL_HOURS = 30;
+
+  // ====== Sidebar elements ======
+  const orgIdTextEl = document.getElementById("orgIdText");
+  const qEl = document.getElementById("q");
+  const memberStatusEl = document.getElementById("memberStatus");
+  const memberListEl = document.getElementById("memberList");
+
+  // ====== Content elements ======
+  const pageTitleEl = document.getElementById("pageTitle");
+  const pageSubEl = document.getElementById("pageSub");
+
+  const statusEl = document.getElementById("status");
+  const metaEl = document.getElementById("meta");
+
+  const weeklySectionEl = document.getElementById("weeklySection");
+  const monthSummarySectionEl = document.getElementById("monthSummarySection");
+  const monthDetailSectionEl = document.getElementById("monthDetailSection");
+
+  const donutProgEl = document.getElementById("donutProg");
+  const donutPctEl = document.getElementById("donutPct");
+  const weeklyHoursEl = document.getElementById("weeklyHours");
+  const weeklyGoalEl = document.getElementById("weeklyGoal");
+  const weeklyRangeEl = document.getElementById("weeklyRange");
+  const weeklyDaysEl = document.getElementById("weeklyDays");
+
+  const monthLabelEl = document.getElementById("monthLabel");
+  const monthLabel2El = document.getElementById("monthLabel2");
+  const monthGridEl = document.getElementById("monthGrid");
+  const monthLogsEl = document.getElementById("monthLogs");
+
+  const prevMonthBtn = document.getElementById("prevMonthBtn");
+  const nextMonthBtn = document.getElementById("nextMonthBtn");
+  const prevMonthBtn2 = document.getElementById("prevMonthBtn2");
+  const nextMonthBtn2 = document.getElementById("nextMonthBtn2");
+
+  // ====== State ======
+  let _membersRaw = [];
+  let _selected = null;       // { memberId, kioskId, name, status, role }
+  let _rawData = null;        // logs response {userId,userName,logData:[]}
+  let _selectedMonth = null;  // {y,m}
+
+  // ====== Util ======
+  function setStatus(msg, cls) {
+    statusEl.className = `status ${cls || "muted"}`;
+    statusEl.textContent = msg;
+  }
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function parseYMD(ymd) {
+    const [y, m, d] = String(ymd).split("-").map(Number);
+    return { y, m, d };
+  }
+  function toMinutes(hhmmss){
+    const [hh, mm, ss] = String(hhmmss).split(":").map(Number);
+    return (hh*60 + mm) + ((ss||0) >= 30 ? 1 : 0);
+  }
+  function minutesToHm(mins){
+    const h = Math.floor(mins/60);
+    const m = mins%60;
+    if(h<=0) return `${m}분`;
+    if(m===0) return `${h}시간`;
+    return `${h}시간 ${m}분`;
+  }
+  function typeTag(type) {
+    const t = (type || "").toLowerCase();
+    const safe = escapeHtml(t || "unknown");
+    const cls = (t === "start" || t === "extend" || t === "end") ? t : "";
+    return `<span class="tag ${cls}">${safe}</span>`;
+  }
+  function computeDayTotalMinutes(day) {
+    const events = Array.isArray(day.events) ? [...day.events] : [];
+    if(events.length === 0) return 0;
+    events.sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+
+    let total = 0;
+    let curStart = null;
+    let lastSeen = null;
+
+    for(const ev of events){
+      const t = toMinutes(ev.time ?? "00:00:00");
+      const type = (ev.type ?? "").toLowerCase();
+
+      if(type === "start"){
+        if(curStart !== null && lastSeen !== null && lastSeen >= curStart){
+          total += (lastSeen - curStart);
+        }
+        curStart = t;
+        lastSeen = t;
+        continue;
+      }
+      if(type === "extend"){
+        if(curStart !== null) lastSeen = t;
+        continue;
+      }
+      if(type === "end"){
+        if(curStart !== null){
+          const endT = t;
+          if(endT >= curStart) total += (endT - curStart);
+          curStart = null;
+          lastSeen = null;
+        }
+        continue;
+      }
+      if(curStart !== null) lastSeen = t;
+    }
+    if(curStart !== null && lastSeen !== null && lastSeen >= curStart){
+      total += (lastSeen - curStart);
+    }
+    if(!Number.isFinite(total) || total < 0) return 0;
+    return total;
+  }
+
+  function getTodayYMD() {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth()+1, d: now.getDate() };
+  }
+  function startOfWeekMonday(dateObj){
+    const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const day = d.getDay(); // 0=Sun
+    const diff = (day === 0 ? -6 : 1 - day); // Monday
+    d.setDate(d.getDate() + diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function endOfWeekSunday(dateObj){
+    const s = startOfWeekMonday(dateObj);
+    const e = new Date(s);
+    e.setDate(e.getDate() + 6);
+    e.setHours(23,59,59,999);
+    return e;
+  }
+
+  function buildDayMap(logData){
+    const map = new Map();
+    for(const d of logData){
+      const date = d.date;
+      if(!date) continue;
+      const mins = computeDayTotalMinutes(d);
+      map.set(date, { raw:d, minutes: mins });
+    }
+    return map;
+  }
+
+  function renderMeta(data){
+    metaEl.style.display = "block";
+    metaEl.innerHTML = `
+      <div><strong>${escapeHtml(data.userName ?? (_selected?.name ?? ""))}</strong></div>
+      <div class="muted">userId: ${escapeHtml(data.userId ?? (_selected?.memberId ?? ""))} / kioskId: ${escapeHtml(_selected?.kioskId ?? "")}</div>
+    `;
+  }
+
+  function markForMinutes(mins){
+    if(mins < 30) return { ch:"X", cls:"markX" };
+    if(mins < 180) return { ch:"▲", cls:"markT" };
+    return { ch:"O", cls:"markO" };
+  }
+
+  function renderWeekly(logData){
+    const now = new Date();
+    const ws = startOfWeekMonday(now);
+    const we = endOfWeekSunday(now);
+
+    const dayMap = buildDayMap(logData);
+
+    let totalMin = 0;
+    let activeDays = 0;
+
+    const iter = new Date(ws);
+    for(let i=0;i<7;i++){
+      const y = iter.getFullYear();
+      const m = iter.getMonth()+1;
+      const d = iter.getDate();
+      const key = `${y}-${pad2(m)}-${pad2(d)}`;
+      const rec = dayMap.get(key);
+      const mins = rec ? rec.minutes : 0;
+      totalMin += mins;
+      if(mins > 0) activeDays += 1;
+      iter.setDate(iter.getDate()+1);
+    }
+
+    const goalMin = WEEKLY_GOAL_HOURS * 60;
+    const pct = goalMin <= 0 ? 0 : Math.max(0, Math.min(100, Math.round((totalMin/goalMin)*100)));
+
+    const r = 46;
+    const C = 2 * Math.PI * r; // ~289
+    const dash = (C * (pct/100));
+    donutProgEl.setAttribute("stroke-dasharray", `${dash} ${C}`);
+    donutPctEl.textContent = `${pct}%`;
+
+    weeklyHoursEl.textContent = minutesToHm(totalMin);
+    weeklyGoalEl.textContent = `${WEEKLY_GOAL_HOURS}시간`;
+
+    const rangeText = `${ws.getFullYear()}-${pad2(ws.getMonth()+1)}-${pad2(ws.getDate())} ~ ${we.getFullYear()}-${pad2(we.getMonth()+1)}-${pad2(we.getDate())}`;
+    weeklyRangeEl.textContent = rangeText;
+    weeklyDaysEl.textContent = String(activeDays);
+
+    weeklySectionEl.style.display = "block";
+  }
+
+  function renderMonthSummary(logData){
+    const {y,m} = _selectedMonth;
+    monthLabelEl.textContent = `${y}년 ${pad2(m)}월`;
+    monthLabel2El.textContent = `${y}년 ${pad2(m)}월`;
+
+    const dayMap = buildDayMap(logData);
+
+    const first = new Date(y, m-1, 1);
+    const last = new Date(y, m, 0);
+    const firstDow = first.getDay(); // 0 Sun
+    const offset = firstDow;
+
+    const daysInMonth = last.getDate();
+    const totalCells = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+    monthGridEl.innerHTML = "";
+
+    for(let i=0;i<totalCells;i++){
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const dayNum = i - offset + 1;
+      if(dayNum < 1 || dayNum > daysInMonth){
+        cell.classList.add("off");
+        cell.innerHTML = `<div class="d">&nbsp;</div><div class="m">&nbsp;</div>`;
+        monthGridEl.appendChild(cell);
+        continue;
+      }
+
+      const cellDate = new Date(y, m-1, dayNum);
+      cellDate.setHours(0,0,0,0);
+
+      const now = new Date();
+      now.setHours(0,0,0,0);
+
+      const isFuture = cellDate.getTime() > now.getTime();
+      const dayOfWeek = cellDate.getDay();
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+      let markHtml = "";
+      if (!isFuture) {
+        const key = `${y}-${pad2(m)}-${pad2(dayNum)}`;
+        const rec = dayMap.get(key);
+        const mins = rec ? rec.minutes : 0;
+
+        if (isWeekend) {
+          if (mins >= 30) markHtml = `<div class="m markO">O</div>`;
+          else markHtml = `<div class="m muted">-</div>`;
+        } else {
+          const mk = markForMinutes(mins);
+          markHtml = `<div class="m ${mk.cls}">${mk.ch}</div>`;
+        }
+      } else {
+        markHtml = `<div class="m muted">&nbsp;</div>`;
+      }
+
+      cell.innerHTML = `<div class="d">${dayNum}일</div>${markHtml}`;
+      monthGridEl.appendChild(cell);
+    }
+
+    monthSummarySectionEl.style.display = "block";
+  }
+
+  function renderMonthDetail(logData){
+    const {y,m} = _selectedMonth;
+
+    const filtered = (Array.isArray(logData) ? logData : [])
+      .filter(d => {
+        const p = parseYMD(d.date ?? "0000-00-00");
+        return p.y === y && p.m === m;
+      });
+
+    filtered.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+
+    monthLogsEl.innerHTML = "";
+
+    if(filtered.length === 0){
+      monthLogsEl.innerHTML = `<div class="muted">선택한 월에 출근 기록이 없습니다.</div>`;
+      monthDetailSectionEl.style.display = "flex";
+      return;
+    }
+
+    for(const day of filtered){
+      const date = day.date ?? "";
+      const dow = (day.day ?? "").toLowerCase();
+      const events = Array.isArray(day.events) ? [...day.events] : [];
+      events.sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+
+      const totalMin = computeDayTotalMinutes(day);
+      const totalTxt = totalMin > 0 ? minutesToHm(totalMin) : "0분";
+
+      const card = document.createElement("div");
+      card.className = "day-card";
+
+      const title = document.createElement("div");
+      title.className = "day-title";
+      title.innerHTML = `
+        <div>
+          <span class="date">${escapeHtml(date)}</span>
+          <span class="dow"> ${escapeHtml(dow)}</span>
+        </div>
+        <div class="total">총 ${escapeHtml(totalTxt)}</div>
+      `;
+      card.appendChild(title);
+
+      if(events.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "이 날짜에 이벤트가 없습니다.";
+        card.appendChild(empty);
+      }else{
+        const ul = document.createElement("ul");
+        ul.className = "events";
+        for(const ev of events){
+          const li = document.createElement("li");
+          const time = ev.time ?? "";
+          const device = ev.source ?? "";
+          const type = ev.type ?? "";
+          li.innerHTML = `${escapeHtml(time)}  (${escapeHtml(device)}) ${typeTag(type)}`;
+          ul.appendChild(li);
+        }
+        card.appendChild(ul);
+      }
+      monthLogsEl.appendChild(card);
+    }
+
+    monthDetailSectionEl.style.display = "flex";
+  }
+
+  function initSelectedMonthFromLogData(logData){
+    if(Array.isArray(logData) && logData.length > 0){
+      const sorted = [...logData].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+      const latest = sorted[0]?.date;
+      if(latest){
+        const {y,m} = parseYMD(latest);
+        return {y,m};
+      }
+    }
+    const t = getTodayYMD();
+    return {y:t.y, m:t.m};
+  }
+
+  function setSelectedMonth(y, m){
+    _selectedMonth = { y, m };
+    renderAll();
+  }
+  function addMonth(delta){
+    const y = _selectedMonth.y;
+    const m = _selectedMonth.m;
+    const base = new Date(y, m-1, 1);
+    base.setMonth(base.getMonth() + delta);
+    setSelectedMonth(base.getFullYear(), base.getMonth()+1);
+  }
+
+  function clearView(){
+    _rawData = null;
+    _selectedMonth = null;
+    metaEl.style.display = "none";
+    metaEl.innerHTML = "";
+    weeklySectionEl.style.display = "none";
+    monthSummarySectionEl.style.display = "none";
+    monthDetailSectionEl.style.display = "none";
+    monthGridEl.innerHTML = "";
+    monthLogsEl.innerHTML = "";
+  }
+
+  function renderAll(){
+    if(!_rawData) return;
+
+    const logData = _rawData.logData;
+
+    renderWeekly(logData);
+    renderMonthSummary(logData);
+    renderMonthDetail(logData);
+
+    prevMonthBtn.onclick = () => addMonth(-1);
+    nextMonthBtn.onclick = () => addMonth(1);
+    prevMonthBtn2.onclick = () => addMonth(-1);
+    nextMonthBtn2.onclick = () => addMonth(1);
+  }
+
+  // ====== Members ======
+  function statusBadgeClass(status){
+    const s = String(status||"").toUpperCase();
+    if(s === "ACTIVE") return "badge active";
+    if(s === "INACTIVE") return "badge inactive";
+    return "badge";
+  }
+
+  function renderMembers(list){
+    memberListEl.innerHTML = "";
+
+    if(list.length === 0){
+      memberListEl.innerHTML = `<div class="item"><div class="muted">멤버가 없습니다.</div></div>`;
+      return;
+    }
+
+    for(const m of list){
+      const div = document.createElement("div");
+      div.className = "item";
+      div.dataset.kioskId = String(m.kioskId);
+      div.dataset.memberId = String(m.memberId);
+
+      const left = document.createElement("div");
+      left.innerHTML = `
+        <div class="name">${escapeHtml(m.name)} 님</div>
+        <div class="meta2">kioskId: ${escapeHtml(m.kioskId)} · role: ${escapeHtml(m.role)}</div>
+      `;
+
+      const right = document.createElement("div");
+      right.className = statusBadgeClass(m.status);
+      right.textContent = String(m.status||"").toUpperCase();
+
+      div.appendChild(left);
+      div.appendChild(right);
+
+      div.onclick = () => selectMember(m);
+      memberListEl.appendChild(div);
+    }
+  }
+
+  function setActiveListItem(memberId){
+    const items = memberListEl.querySelectorAll(".item");
+    items.forEach(it => {
+      it.classList.toggle("active", String(it.dataset.memberId) === String(memberId));
+    });
+  }
+
+  function filteredMembers(){
+    const q = qEl.value.trim().toLowerCase();
+    if(!q) return _membersRaw;
+    return _membersRaw.filter(m =>
+      String(m.name||"").toLowerCase().includes(q) ||
+      String(m.kioskId||"").includes(q)
+    );
+  }
+
+  async function loadMembers(){
+    orgIdTextEl.textContent = String(ORG_ID);
+    memberStatusEl.textContent = "멤버 목록 로딩 중...";
+
+    try{
+      const url = `${MEMBERS_API}?orgId=${encodeURIComponent(ORG_ID)}`;
+      const res = await fetch(url, {method:"GET", headers:{ "Accept":"application/json" }});
+      if(!res.ok){
+        const text = await res.text();
+        memberStatusEl.textContent = `멤버 목록 로딩 실패: HTTP ${res.status}`;
+        memberStatusEl.className = "sub error";
+        console.error(text);
+        return;
+      }
+
+      const data = await res.json();
+      _membersRaw = Array.isArray(data.list) ? data.list : [];
+      memberStatusEl.textContent = `멤버 ${_membersRaw.length}명`;
+      memberStatusEl.className = "sub muted";
+
+      renderMembers(filteredMembers());
+
+    }catch(e){
+      memberStatusEl.textContent = `네트워크 오류: ${String(e)}`;
+      memberStatusEl.className = "sub error";
+    }
+  }
+
+  // ====== Logs ======
+  async function selectMember(m){
+    _selected = m;
+    setActiveListItem(m.memberId);
+
+    pageTitleEl.textContent = `${m.name} 님`;
+    pageSubEl.textContent = `kioskId ${m.kioskId} · status ${String(m.status||"").toUpperCase()}`;
+
+    clearView();
+    setStatus("요청 중...", "muted");
+
+    try{
+      const url = `${LOGS_API}?kioskId=${encodeURIComponent(m.kioskId)}`;
+      const res = await fetch(url, {method:"GET", headers:{ "Accept":"application/json" }});
+      if(!res.ok){
+        const text = await res.text();
+        setStatus(`요청 실패: HTTP ${res.status}\n${text}`, "error");
+        return;
+      }
+
+      const data = await res.json();
+      if(!data || typeof data !== "object" || !Array.isArray(data.logData)){
+        setStatus("응답 형식이 올바르지 않습니다. (logData 누락)", "error");
+        return;
+      }
+
+      _rawData = data;
+      renderMeta(data);
+
+      _selectedMonth = initSelectedMonthFromLogData(data.logData);
+      renderAll();
+
+      setStatus(`조회 성공: ${data.logData.length}일치 로그를 요약 표시했습니다.`, "ok");
+    }catch(e){
+      setStatus(`네트워크 오류: ${String(e)}`, "error");
+    }
+  }
+
+  // 검색 이벤트
+  qEl.addEventListener("input", () => renderMembers(filteredMembers()));
+
+  // 초기 로드
+  loadMembers();
+  setStatus("좌측에서 멤버를 선택하세요.", "muted");
+</script>
+</body>
+</html>
