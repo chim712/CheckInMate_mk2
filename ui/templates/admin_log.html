@@ -654,12 +654,16 @@
     _selectedMonth = { y, m };
     renderAll();
   }
-  function addMonth(delta){
-    const y = _selectedMonth.y;
-    const m = _selectedMonth.m;
-    const base = new Date(y, m-1, 1);
+
+  function addMonth(delta) {
+    if (!_selected || !_selectedMonth) return;
+
+    const { y, m } = _selectedMonth;
+    const base = new Date(y, m - 1, 1);
     base.setMonth(base.getMonth() + delta);
-    setSelectedMonth(base.getFullYear(), base.getMonth()+1);
+
+    // 선택된 멤버 그대로, 날짜만 바꿔서 재요청
+    selectMember(_selected, base.getFullYear(), base.getMonth() + 1);
   }
 
   function clearView(){
@@ -774,39 +778,50 @@
   }
 
   // ====== Logs ======
-  async function selectMember(m){
+  async function selectMember(m, targetY, targetM) {
     _selected = m;
     setActiveListItem(m.memberId);
+
+    // targetY, targetM이 없으면 오늘 날짜 기준
+    const now = new Date();
+    const y = targetY || now.getFullYear();
+    const m_val = targetM || now.getMonth() + 1;
 
     pageTitleEl.textContent = `${m.name} 님`;
     pageSubEl.textContent = `kioskId ${m.kioskId} · status ${String(m.status||"").toUpperCase()}`;
 
     clearView();
-    setStatus("요청 중...", "muted");
+    setStatus(`${y}년 ${m_val}월 데이터 요청 중...`, "muted");
 
-    try{
-      const url = `${LOGS_API}?kioskId=${encodeURIComponent(m.kioskId)}`;
+    // 날짜 범위 계산 (external_log.html과 동일한 로직)
+    const firstDay = new Date(y, m_val - 1, 1);
+    const diff = (firstDay.getDay() === 0 ? -6 : 1 - firstDay.getDay());
+    const startDt = new Date(y, m_val - 1, 1 + diff);
+    const startDate = `${startDt.getFullYear()}-${pad2(startDt.getMonth() + 1)}-${pad2(startDt.getDate())}`;
+
+    const lastDt = new Date(y, m_val, 0);
+    const endDate = `${y}-${pad2(m_val)}-${pad2(lastDt.getDate())}`;
+
+    try {
+      // 확장된 API 호출
+      const url = `${LOGS_API}?kioskId=${encodeURIComponent(m.kioskId)}&start=${startDate}&end=${endDate}`;
       const res = await fetch(url, {method:"GET", headers:{ "Accept":"application/json" }});
-      if(!res.ok){
+
+      if(!res.ok) {
         const text = await res.text();
         setStatus(`요청 실패: HTTP ${res.status}\n${text}`, "error");
         return;
       }
 
       const data = await res.json();
-      if(!data || typeof data !== "object" || !Array.isArray(data.logData)){
-        setStatus("응답 형식이 올바르지 않습니다. (logData 누락)", "error");
-        return;
-      }
-
       _rawData = data;
+      _selectedMonth = { y, m: m_val }; // 선택된 월 상태 업데이트
+
       renderMeta(data);
+      renderAll(); // UI 업데이트
 
-      _selectedMonth = initSelectedMonthFromLogData(data.logData);
-      renderAll();
-
-      setStatus(`조회 성공: ${data.logData.length}일치 로그를 요약 표시했습니다.`, "ok");
-    }catch(e){
+      setStatus(`${y}년 ${m_val}월 조회 성공: ${data.logData.length}일치`, "ok");
+    } catch(e) {
       setStatus(`네트워크 오류: ${String(e)}`, "error");
     }
   }

@@ -352,12 +352,15 @@
       renderAll();
     }
 
-    function addMonth(delta){
-      const y = _selectedMonth.y;
-      const m = _selectedMonth.m;
-      const base = new Date(y, m-1, 1);
+    function addMonth(delta) {
+      if (!_selectedMonth) return;
+
+      const { y, m } = _selectedMonth;
+      const base = new Date(y, m - 1, 1);
       base.setMonth(base.getMonth() + delta);
-      setSelectedMonth(base.getFullYear(), base.getMonth()+1);
+
+      // 상태만 바꾸는 게 아니라 서버에 새로 요청함 - 변경된 연/월로 재호출
+      onSearch(base.getFullYear(), base.getMonth() + 1);
     }
 
     function buildDayMap(logData){
@@ -601,7 +604,7 @@
       return {y:t.y, m:t.m};
     }
 
-    async function onSearch() {
+    async function onSearch(targetY, targetM) {
       const kioskId = kioskIdEl.value.trim();
 
       if (!isNaturalNumber(kioskId)) {
@@ -609,11 +612,29 @@
         return;
       }
 
+      // targetY, targetM 인자가 없으면 오늘 날짜를 기준으로 함
+      const now = new Date();
+      const y = targetY || now.getFullYear();
+      const m = targetM || now.getMonth() + 1;
+
+      // [핵심] 3번 로직 통합: 해당 월 1일이 포함된 주의 월요일 찾기
+      const firstDayOfMonth = new Date(y, m - 1, 1);
+      const dayIdx = firstDayOfMonth.getDay(); // 0:일, 1:월 ...
+      const diffToMonday = (dayIdx === 0 ? -6 : 1 - dayIdx); // 월요일까지의 차이 계산
+
+      const startDt = new Date(y, m - 1, 1 + diffToMonday);
+      const startDate = `${startDt.getFullYear()}-${pad2(startDt.getMonth() + 1)}-${pad2(startDt.getDate())}`;
+
+      // 해당 월의 마지막 날 계산
+      const lastDt = new Date(y, m, 0);
+      const endDate = `${y}-${pad2(m)}-${pad2(lastDt.getDate())}`;
+
       btnEl.disabled = true;
-      setStatus("요청 중...", "muted");
+      setStatus(`${y}년 ${m}월 데이터 요청 중...`, "muted");
 
       try {
-        const url = `${API_PATH}?kioskId=${encodeURIComponent(kioskId)}`;
+        // 백엔드 API 호출 (수정된 start, end 파라미터 적용)
+        const url = `${API_PATH}?kioskId=${encodeURIComponent(kioskId)}&start=${startDate}&end=${endDate}`;
         const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
 
         if (!res.ok) {
@@ -623,32 +644,20 @@
         }
 
         const data = await res.json();
-
-        if (!data || typeof data !== "object") {
+        if (!data || !Array.isArray(data.logData)) {
           setStatus("응답 형식이 올바르지 않습니다.", "error");
           return;
         }
 
-        const logData = data.logData;
-        if (!Array.isArray(logData)) {
-          setStatus("응답 형식이 올바르지 않습니다. (logData 누락)", "error");
-          return;
-        }
-
+        // 전역 상태 업데이트
         _rawData = data;
+        _selectedMonth = { y, m };
 
+        // UI 렌더링
         renderMeta(data);
-
-        const init = initSelectedMonthFromLogData(logData);
-        _selectedMonth = init;
-
-        weeklySectionEl.style.display = "none";
-        monthSummarySectionEl.style.display = "none";
-        monthDetailSectionEl.style.display = "none";
-
         renderAll();
 
-        setStatus(`조회 성공: ${logData.length}일치 로그를 요약 표시했습니다.`, "ok");
+        setStatus(`${y}년 ${m}월 조회 성공: ${data.logData.length}일치 로그`, "ok");
 
       } catch (e) {
         setStatus(`네트워크 오류: ${String(e)}`, "error");
@@ -656,6 +665,62 @@
         btnEl.disabled = false;
       }
     }
+    // Legacy function ~26.05.08.
+    // async function onSearch() {
+    //   const kioskId = kioskIdEl.value.trim();
+    //
+    //   if (!isNaturalNumber(kioskId)) {
+    //     setStatus("kioskId는 숫자만 허용됩니다.", "error");
+    //     return;
+    //   }
+    //
+    //   btnEl.disabled = true;
+    //   setStatus("요청 중...", "muted");
+    //
+    //   try {
+    //     const url = `${API_PATH}?kioskId=${encodeURIComponent(kioskId)}`;
+    //     const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+    //
+    //     if (!res.ok) {
+    //       const text = await res.text();
+    //       setStatus(`요청 실패: HTTP ${res.status}\n${text}`, "error");
+    //       return;
+    //     }
+    //
+    //     const data = await res.json();
+    //
+    //     if (!data || typeof data !== "object") {
+    //       setStatus("응답 형식이 올바르지 않습니다.", "error");
+    //       return;
+    //     }
+    //
+    //     const logData = data.logData;
+    //     if (!Array.isArray(logData)) {
+    //       setStatus("응답 형식이 올바르지 않습니다. (logData 누락)", "error");
+    //       return;
+    //     }
+    //
+    //     _rawData = data;
+    //
+    //     renderMeta(data);
+    //
+    //     const init = initSelectedMonthFromLogData(logData);
+    //     _selectedMonth = init;
+    //
+    //     weeklySectionEl.style.display = "none";
+    //     monthSummarySectionEl.style.display = "none";
+    //     monthDetailSectionEl.style.display = "none";
+    //
+    //     renderAll();
+    //
+    //     setStatus(`조회 성공: ${logData.length}일치 로그를 요약 표시했습니다.`, "ok");
+    //
+    //   } catch (e) {
+    //     setStatus(`네트워크 오류: ${String(e)}`, "error");
+    //   } finally {
+    //     btnEl.disabled = false;
+    //   }
+    // }
 
     btnEl.addEventListener("click", onSearch);
     kioskIdEl.addEventListener("keydown", (e) => { if (e.key === "Enter") onSearch(); });

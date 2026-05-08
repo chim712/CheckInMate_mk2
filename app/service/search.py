@@ -1,10 +1,8 @@
 # app/service/search.py
-from collections import OrderedDict
-from datetime import timedelta
-from zoneinfo import ZoneInfo
 
-KST = ZoneInfo("Asia/Seoul")
-UTC = ZoneInfo("UTC")
+from collections import OrderedDict
+from datetime import date, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -12,6 +10,90 @@ from fastapi import HTTPException
 
 from app.service.session import cleanup_expired_sessions
 
+KST = ZoneInfo("Asia/Seoul")
+UTC = ZoneInfo("UTC")
+
+
+
+def get_attendance_data(db: Session, kiosk_id: int, start_date: str = None, end_date: str = None) -> dict:
+    """
+    kioskId와 선택적 기간(start_date ~ end_date)을 기준으로
+    Member + AttendanceLog를 조회합니다.
+    """
+    cleanup_expired_sessions(db)
+
+    # 1) 회원 확인
+    member = db.execute(
+        text("""
+        SELECT id, name, status
+        FROM Member
+        WHERE kiosk_id = :kiosk_id
+          AND deleted_at IS NULL
+        """),
+        {"kiosk_id": kiosk_id},
+    ).mappings().first()
+
+    if member is None:
+        raise HTTPException(status_code=404, detail="해당 kioskId의 회원이 존재하지 않습니다.")
+
+    member_id = member["id"]
+    member_name = member["name"]
+
+    # 2) AttendanceLog 조회 (기간 필터링 추가)
+    # 기본 쿼리
+    base_query = """
+        SELECT event_time, event_type, source
+        FROM AttendanceLog
+        WHERE member_id = :member_id
+    """
+    params = {"member_id": member_id}
+
+    # 1. 파라미터가 없으면 '최근 30일'로 기본값 설정 (방어 로직)
+    if not start_date or not end_date:
+        end_date = str(date.today())
+        start_date = str(date.today() - timedelta(days=30))
+
+    # 2. 확정된 start_date, end_date를 쿼리에 바인딩
+    base_query += " AND event_time >= :start AND event_time <= :end"
+    params["start"] = f"{start_date} 00:00:00"
+    params["end"] = f"{end_date} 23:59:59"
+
+    base_query += " ORDER BY event_time ASC"
+
+    rows = db.execute(text(base_query), params).mappings().all()
+
+    # 3) 데이터 가공 (기존 로직 유지)
+    result = {"userId": member_id, "userName": member_name, "logData": []}
+
+    if not rows: return result
+
+    weekday_codes = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    day_map = OrderedDict()
+
+    for r in rows:
+        dt_utc = r["event_time"]
+        dt_local = dt_utc + timedelta(hours=9) # KST 변환
+
+        date_str = dt_local.strftime("%Y-%m-%d")
+        time_str = dt_local.strftime("%H:%M:%S")
+        day_code = weekday_codes[dt_local.weekday()]
+
+        if date_str not in day_map:
+            entry = {"date": date_str, "day": day_code, "events": []}
+            day_map[date_str] = entry
+            result["logData"].append(entry)
+
+        day_map[date_str]["events"].append({
+            "time": time_str,
+            "type": (r["event_type"] or "").lower(),
+            "source": (r["source"] or "").lower()
+        })
+
+    return result
+
+'''
+Legacy Function
+(search all date)
 
 def get_attendance_data(db: Session, kiosk_id: int) -> dict:
     """
@@ -93,7 +175,7 @@ def get_attendance_data(db: Session, kiosk_id: int) -> dict:
         })
 
     return result
-
+'''
 
 
 

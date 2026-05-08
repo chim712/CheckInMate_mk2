@@ -1,4 +1,4 @@
-# app/api/submit.py
+# app/api/attendance.py
 
 import logging
 
@@ -53,6 +53,27 @@ def post_attendance_end(
 # =================================================================================================
 #                               View Log
 # =================================================================================================
+
+
+@router.get("/logs")
+def get_attendance_logs(
+    kioskId: int,
+    start: str | None = None,  # Optional 파라미터로 정의
+    end: str | None = None,    # Optional 파라미터로 정의
+    db: Session = Depends(get_db),
+):
+    """
+    출결 조회 페이지에서 사용하는 JSON을 반환한다.
+    예: GET /attendance/logs?kioskId=1129&start=2026-05-01&end=2026-05-31
+    """
+    # 서비스 함수에 파라미터 전달
+    data = get_attendance_data(db, kioskId, start_date=start, end_date=end)
+    return data
+
+'''
+Legacy Function
+~26.05.08.
+
 @router.get("/logs")
 def get_attendance_logs(
     kioskId: int,              # 쿼리 파라미터 ?kioskId=1129
@@ -64,6 +85,7 @@ def get_attendance_logs(
     """
     data = get_attendance_data(db, kioskId)
     return data
+'''
 
 
 
