@@ -1,9 +1,10 @@
 -- =====================================================================
 -- 요구사항 1: 현재 운영 DB(checkinmate) 스키마를 아래 상태로 맞추기 위한 ALTER 쿼리
 --
--- 적용 전 상태 (2026-08-14 조사 기준):
---   - Member.org_id     : FK 없음 (migration/003에는 fk_member_org가 정의돼 있었으나 실제 DB에는 미반영)
---   - AttendanceLog.org_id : NULL 허용, FK 없음, 813건 중 551건이 NULL
+-- 적용 전 상태 (2026-09-02 재확인 기준):
+--   - Member.org_id     : 실제 컬럼 타입이 BIGINT(20) NOT NULL (Org.id는 INT(11)) -> 타입 불일치로 FK 생성 시 errno 150 발생
+--                         (원격 서버에 _fktest 임시 DB를 만들어 동일 타입으로 재현 확인 후 즉시 drop함. checkinmate 실 데이터는 건드리지 않음)
+--   - AttendanceLog.org_id : INT(11) NULL 허용, FK 없음, 813건 중 551건이 NULL (org_id 자체 타입은 Org.id와 일치)
 --   - Device.id         : AUTO_INCREMENT 아님, org FK 없음
 --   - AttendanceLog     : device_id 컬럼 자체가 없음 (재실 인증 기기 추적 불가)
 --
@@ -12,9 +13,13 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------
--- 1) Member.org_id  ->  Org(id) FK 추가
---    (기존 데이터 4건 전부 org_id=1로 채워져 있어 바로 추가 가능)
+-- 1) Member.org_id  타입을 Org.id와 맞춘 뒤 FK 추가
+--    - BIGINT(20) -> INT(11) 로 축소하지만 현재 값이 전부 1이라 데이터 손실 없음
+--    - 타입을 맞추지 않고 바로 FK를 걸면 ERROR 1005 (errno 150)로 실패함
 -- ---------------------------------------------------------------
+ALTER TABLE Member
+    MODIFY COLUMN org_id INT(11) NOT NULL;
+
 ALTER TABLE Member
     ADD CONSTRAINT fk_member_org
         FOREIGN KEY (org_id) REFERENCES Org(id);
