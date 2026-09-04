@@ -27,7 +27,7 @@ def _find_member_by_kiosk_id(db: Session, kiosk_id: int):
     """
     row = db.execute(
         text("""
-        SELECT id, name, status
+        SELECT id, org_id, name, status
         FROM Member
         WHERE kiosk_id = :kiosk_id
           AND deleted_at IS NULL
@@ -77,6 +77,7 @@ def punch_attendance(db: Session, payload: AttendancePingIn) -> dict:
 
     member = _find_member_by_kiosk_id(db, payload.kioskId)
     member_id = member["id"]
+    member_org_id = member["org_id"]
     member_name = member.get("name")
 
     last = _get_last_event(db, member_id)
@@ -103,10 +104,11 @@ def punch_attendance(db: Session, payload: AttendancePingIn) -> dict:
     # 3) 로그 기록(기존 동일)
     db.execute(
         text("""
-        INSERT INTO AttendanceLog (member_id, event_type, source, meta, event_time)
-        VALUES (:member_id, :event_type, :source, :meta, :event_time)
+        INSERT INTO AttendanceLog (org_id, member_id, event_type, source, meta, event_time)
+        VALUES (:org_id, :member_id, :event_type, :source, :meta, :event_time)
         """),
         {
+            "org_id": member_org_id,
             "member_id": member_id,
             "event_type": event_type,
             "source": source,
@@ -182,6 +184,7 @@ def end_attendance(db: Session, payload: AttendanceEndIn) -> dict:
 
     member = _find_member_by_kiosk_id(db, payload.kioskId)
     member_id = member["id"]
+    member_org_id = member["org_id"]
 
     meta_str = json.dumps(payload.meta, ensure_ascii=False) if payload.meta is not None else None
 
@@ -190,10 +193,11 @@ def end_attendance(db: Session, payload: AttendanceEndIn) -> dict:
     # 1) END 로그 기록
     db.execute(
         text("""
-            INSERT INTO AttendanceLog (member_id, event_type, source, meta, event_time)
-            VALUES (:member_id, 'END', :source, :meta, :event_time)
+            INSERT INTO AttendanceLog (org_id, member_id, event_type, source, meta, event_time)
+            VALUES (:org_id, :member_id, 'END', :source, :meta, :event_time)
             """),
         {
+            "org_id": member_org_id,
             "member_id": member_id,
             "source": payload.source or "KIOSK",
             "meta": meta_str,
